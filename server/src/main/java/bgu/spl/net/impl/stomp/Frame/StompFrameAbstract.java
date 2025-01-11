@@ -6,20 +6,15 @@ public abstract class StompFrameAbstract {
     protected String command;
     protected HashMap<String, String> headers;
     protected String body;
-    protected int msgId=1;
 
     protected StompFrameAbstract(String inCommand){
         this.command = inCommand;
         this.headers = new HashMap<>();
         this.body = "";
-        this.msgId++;
     }
 
     public String getCommand() {
         return command;
-    }
-    public int getMsgId(){
-        return msgId;
     }
 
     public HashMap<String, String> getHeaders() {
