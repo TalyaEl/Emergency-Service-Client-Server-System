@@ -40,9 +40,14 @@ public class ConnectionsImpl<T> implements Connections<T> {
     public boolean send(int connectionId, T msg) {
         if (handlers.containsKey(connectionId)) {
             NonBlockingConnectionHandler<T> handler = handlers.get(connectionId);
-            handler.send(msg);
-            // disconnect(sub);
-            return true;
+            if (handler.isClosed() || handler == null) {
+                disconnect(connectionId);
+                System.out.println("couldn't send, connection terminated for" + connectionId);
+            }
+            else {
+                handler.send(msg);
+                return true;
+            }
         }
         return false;
     }
@@ -52,13 +57,8 @@ public class ConnectionsImpl<T> implements Connections<T> {
         ConcurrentHashMap<Integer, Boolean> subscribers = channelSubscribers.get(channel);
         if (subscribers != null) {
             for (Integer sub : subscribers.keySet()) {
-                // NonBlockingConnectionHandler<T> handler = handlers.get(sub);
                 // MessageFrame frame = new MessageFrame(sub, msgId, channel, msg.toString());
-                if (!send(sub, msg)) {
-                    System.out.println("couldn't send, connection terminated for" + sub);
-                    // ErrorFrame error = new ErrorFrame("couldn't send", sub, null, frame);
-                    disconnect(sub);
-                }
+                send(sub, msg);
             }
         }
     }
@@ -78,9 +78,11 @@ public class ConnectionsImpl<T> implements Connections<T> {
     }
 
     public synchronized void subscribe(int connectionId, String channel) {
-        clientSubscriptions.get(connectionId).put(channel, Boolean.TRUE);
-        channelSubscribers.putIfAbsent(channel, new ConcurrentHashMap<>());
-        channelSubscribers.get(channel).putIfAbsent(connectionId, true);
+        if (handlers.containsKey(connectionId)) {
+            clientSubscriptions.get(connectionId).put(channel, Boolean.TRUE);
+            channelSubscribers.putIfAbsent(channel, new ConcurrentHashMap<>());
+            channelSubscribers.get(channel).putIfAbsent(connectionId, true);
+        }
     }
 
     public synchronized void unsubscribe(int connectionId, String channel) {
