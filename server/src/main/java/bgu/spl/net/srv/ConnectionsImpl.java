@@ -35,12 +35,14 @@ public class ConnectionsImpl<T> implements Connections<T> {
                 disconnect(connectionId);
                 System.out.println("couldn't send, connection terminated for" + connectionId);
             }
-            else {
+            try {
                 handler.send(msg);
-                return true;
+            } catch (IllegalStateException e) {
+                disconnect(connectionId);
+                return false;
             }
         }
-        return false; //maybe adding error frame here?
+        return true; //maybe adding error frame here?
     }
 
     @Override
@@ -48,7 +50,6 @@ public class ConnectionsImpl<T> implements Connections<T> {
         ConcurrentHashMap<Integer, Boolean> subscribers = channelSubscribers.get(channel);
         if (subscribers != null) {
             for (Integer sub : subscribers.keySet()) {
-                // MessageFrame frame = new MessageFrame(sub, msgId, channel, msg.toString());
                 send(sub, msg);
             }
         }

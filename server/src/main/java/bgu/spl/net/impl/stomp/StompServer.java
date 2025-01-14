@@ -11,7 +11,7 @@ public class StompServer {
             Server.threadPerClient(
                 7777, //port
                 // () -> new EchoProtocol(), //protocol factory
-                // LineMessageEncoderDecoder::new //message encoder decoder factory
+                // StompEncoderDecoder::new //message encoder decoder factory
             ).serve();
         }
         else if (args[1] == "reactor") {
@@ -19,7 +19,7 @@ public class StompServer {
                  Runtime.getRuntime().availableProcessors(),
                  7777, //port
                 //  () -> new EchoProtocol<>(), //protocol factory
-                //  LineMessageEncoderDecoder::new //message encoder decoder factory
+                //  StompEncoderDecoder::new //message encoder decoder factory
             ).serve();
         }
         else {
