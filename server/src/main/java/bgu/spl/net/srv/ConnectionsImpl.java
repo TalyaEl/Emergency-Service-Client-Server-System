@@ -7,7 +7,7 @@ import bgu.spl.net.impl.stomp.Frame.MessageFrame;
 import bgu.spl.net.srv.NonBlockingConnectionHandler;
 
 public class ConnectionsImpl<T> implements Connections<T> {
-    private static final AtomicInteger clientId = new AtomicInteger(0);
+    private final AtomicInteger clientId = new AtomicInteger(0);
     private ConcurrentHashMap<Integer, NonBlockingConnectionHandler<T>> handlers;
     private ConcurrentHashMap<String, ConcurrentHashMap<Integer, Boolean>> channelSubscribers;
 
