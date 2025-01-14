@@ -7,12 +7,12 @@ public class ErrorFrame extends StompFrameAbstract {
         super("ERROR");
         //if the frame has a receipt header than put it's value
         if (frame.getHeaders().containsKey("receipt")) {
-            this.headers.put("receipt-id:", frame.getHeaders().get("receipt"));
+            this.headers.put("receipt-id", frame.getHeaders().get("receipt"));
         }
         else {
-            this.headers.put("receipt-id:", String.valueOf(clientID));
+            this.headers.put("receipt-id", String.valueOf(clientID));
         }
-        this.headers.put("message:", error);
+        this.headers.put("message", error);
         //building the body according to the example
         StringBuilder bodyB = new StringBuilder();
         bodyB.append("The message:").append("\n");

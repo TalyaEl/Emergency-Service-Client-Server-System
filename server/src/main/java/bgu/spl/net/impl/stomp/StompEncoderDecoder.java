@@ -176,6 +176,6 @@ public class StompEncoderDecoder implements MessageEncoderDecoder<StompFrameAbst
 
     @Override
     public byte[] encode(StompFrameAbstract message) {
-        return null;
+        return message.encode();
     }
 }

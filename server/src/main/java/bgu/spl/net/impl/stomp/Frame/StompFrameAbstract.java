@@ -31,16 +31,21 @@ public abstract class StompFrameAbstract {
 
     public String toString() {
         StringBuilder ans = new StringBuilder();
-        ans.append(command).append("\n");
-        for (HashMap.Entry<String, String> entry : headers.entrySet()) {
-            ans.append(entry.getKey()).append(": ").append(entry.getValue()).append("\n");
+        ans.append(this.command + "\n");
+        for (String key : this.headers.keySet()) {
+            String value = this.headers.get(key);
+            ans.append(key + ":" + value + "\n");
         }
         ans.append("\n"); // Empty line between headers and body
         if (body != "") {
-            ans.append(body).append("\n");
+            ans.append(body + "\n");
         }
-        ans.append((char) 0); // Null character to terminate the frame
+        ans.append("\n" + '\0'); // Null character to terminate the frame
         return ans.toString();
+    }
+
+    public byte[] encode() {
+        return toString().getBytes();
     }
 
 }
