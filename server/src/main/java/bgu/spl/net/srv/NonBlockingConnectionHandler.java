@@ -117,7 +117,7 @@ public class NonBlockingConnectionHandler<T> implements ConnectionHandler<T> {
     }
 
     @Override
-    public void send(T msg) {
-        //IMPLEMENT IF NEEDED
+    public void send(T msg) throws IllegalStateException {
+        writeQueue.add(ByteBuffer.wrap(encdec.encode(msg)));
     }
 }

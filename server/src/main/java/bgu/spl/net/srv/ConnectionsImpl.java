@@ -1,9 +1,5 @@
 package bgu.spl.net.srv;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import bgu.spl.net.impl.stomp.Frame.ErrorFrame;
@@ -12,23 +8,18 @@ import bgu.spl.net.srv.NonBlockingConnectionHandler;
 
 public class ConnectionsImpl<T> implements Connections<T> {
     private static final AtomicInteger clientId = new AtomicInteger(0);
-    // private final int msgId;
     private ConcurrentHashMap<Integer, NonBlockingConnectionHandler<T>> handlers;
-    private ConcurrentHashMap<Integer, ConcurrentHashMap<String,Boolean>> clientSubscriptions;
     private ConcurrentHashMap<String, ConcurrentHashMap<Integer, Boolean>> channelSubscribers;
 
     public ConnectionsImpl() {
-        // this.msgId = counter.getAndIncrement();
         this.handlers = new ConcurrentHashMap<>();
         this.channelSubscribers = new ConcurrentHashMap<>();
-        this.clientSubscriptions = new ConcurrentHashMap<>();
     }
 
    public synchronized void addConnection(NonBlockingConnectionHandler<T> handler) {
         if (handler != null) {
             int connectionId = clientId.incrementAndGet();
             handlers.put(connectionId, handler);
-            clientSubscriptions.put(connectionId, new ConcurrentHashMap<>());
         }
         else {
             throw new IllegalArgumentException("Handler cannot be null");
@@ -40,7 +31,7 @@ public class ConnectionsImpl<T> implements Connections<T> {
     public boolean send(int connectionId, T msg) {
         if (handlers.containsKey(connectionId)) {
             NonBlockingConnectionHandler<T> handler = handlers.get(connectionId);
-            if (handler.isClosed() || handler == null) {
+            if (handler.isClosed()) {
                 disconnect(connectionId);
                 System.out.println("couldn't send, connection terminated for" + connectionId);
             }
@@ -49,7 +40,7 @@ public class ConnectionsImpl<T> implements Connections<T> {
                 return true;
             }
         }
-        return false;
+        return false; //maybe adding error frame here?
     }
 
     @Override
@@ -68,28 +59,23 @@ public class ConnectionsImpl<T> implements Connections<T> {
         if (handlers.containsKey(connectionId)) {
             NonBlockingConnectionHandler<T> handler = handlers.get(connectionId);
             handler.close();
-            ConcurrentHashMap<String,Boolean> temp = clientSubscriptions.get(connectionId);
-            for (String channel : temp.keySet()) { //for each channel, remove this client from it's subscribers
-                channelSubscribers.get(channel).remove(connectionId);
+            for (String channel : channelSubscribers.keySet()) {
+                ConcurrentHashMap<Integer, Boolean> subscribers = channelSubscribers.get(channel);
+                if (subscribers != null) {
+                    subscribers.remove(connectionId);
+                }
             }
-            handlers.remove(connectionId);
-            clientSubscriptions.remove(connectionId);
         }
     }
 
     public synchronized void subscribe(int connectionId, String channel) {
         if (handlers.containsKey(connectionId)) {
-            clientSubscriptions.get(connectionId).put(channel, Boolean.TRUE);
             channelSubscribers.putIfAbsent(channel, new ConcurrentHashMap<>());
             channelSubscribers.get(channel).putIfAbsent(connectionId, true);
         }
     }
 
     public synchronized void unsubscribe(int connectionId, String channel) {
-        ConcurrentHashMap<String, Boolean> subscriptions = clientSubscriptions.get(connectionId);
-        if (subscriptions != null) {
-            subscriptions.remove(channel);
-        }
         ConcurrentHashMap<Integer, Boolean> subscribers = channelSubscribers.get(channel);
         if (subscribers != null) {
             subscribers.remove(connectionId);
