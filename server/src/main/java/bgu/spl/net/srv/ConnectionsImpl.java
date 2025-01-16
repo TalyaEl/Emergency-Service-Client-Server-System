@@ -2,9 +2,6 @@ package bgu.spl.net.srv;
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import bgu.spl.net.impl.stomp.Frame.ErrorFrame;
-import bgu.spl.net.impl.stomp.Frame.MessageFrame;
-import bgu.spl.net.srv.NonBlockingConnectionHandler;
 
 public class ConnectionsImpl<T> implements Connections<T> {
     private final AtomicInteger clientId = new AtomicInteger(0);
@@ -56,7 +53,7 @@ public class ConnectionsImpl<T> implements Connections<T> {
         if (handlers.containsKey(connectionId)) {
             ConnectionHandler<T> handler = handlers.get(connectionId);
             try {
-                handler.close();
+                handler.close(); //
             } catch (IOException e) {}
         }
         for (String channel : channelSubscribers.keySet()) {
