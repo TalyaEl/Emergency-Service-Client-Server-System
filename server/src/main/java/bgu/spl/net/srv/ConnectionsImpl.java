@@ -18,7 +18,7 @@ public class ConnectionsImpl<T> implements Connections<T> {
    public synchronized void addConnection(ConnectionHandler<T> handler) {
         if (handler != null) {
             int connectionId = clientId.incrementAndGet();
-            activeUsers.put(connectionId, handler);
+            activeUsers.put(connectionId, handler); 
         }
         else {
             throw new IllegalArgumentException("Handler cannot be null");
