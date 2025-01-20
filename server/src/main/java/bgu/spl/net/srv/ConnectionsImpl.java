@@ -79,4 +79,14 @@ public class ConnectionsImpl<T> implements Connections<T> {
             subscribers.remove(connectionId);
         }
     }
+    public String checkUser(String user){
+        if(loginInfo.contains(user))
+            return loginInfo.get(user);
+        return null;
+    }
+
+    public void addUser(String username, String password){
+        loginInfo.put(username, password);
+    }
+
 }
