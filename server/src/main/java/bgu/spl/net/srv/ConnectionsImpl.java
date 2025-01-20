@@ -48,17 +48,11 @@ public class ConnectionsImpl<T> implements Connections<T> {
         String frameString = msg.toString();
         String[] lines = frameString.split("\n");
         String body = parseBody(lines);
-        //getting channel&subId according to connection id
+        //for each connection id, crating message frame and send to the subscriber
         for (Integer id : channelSubscribers.get(channel).keySet()) {
             int subId = userSubscriptions.get(id).get(channel);
             MessageFrame broadcast = new MessageFrame(subId, channel, body);
-            send(id, broadcast);
-
-        }
-        ConcurrentHashMap<Integer, Boolean> subscribers = channelSubscribers.get(channel);
-        if (subscribers != null) {
-            for (Integer sub : subscribers.keySet()) {
-            }
+            send((int)id, broadcast);
         }
     }
 
@@ -79,10 +73,12 @@ public class ConnectionsImpl<T> implements Connections<T> {
         }
     }
 
-    public synchronized void subscribe(int connectionId, String channel) { //helper
-        if (activeUsers.containsKey(connectionId)) {
-            channelSubscribers.putIfAbsent(channel, new ConcurrentHashMap<>());
+    public synchronized void subscribe(int connectionId, String channel, int subId) { //helper
+        if (activeUsers.containsKey(connectionId)) { //checking if the user is active
+            channelSubscribers.putIfAbsent(channel, new ConcurrentHashMap<>()); //if the channel doesn't exist, create it
             channelSubscribers.get(channel).putIfAbsent(connectionId, true);
+            userSubscriptions.putIfAbsent(connectionId, new ConcurrentHashMap<>()); //if the user has no subscriptions, create it
+            userSubscriptions.get(connectionId).putIfAbsent(channel, subId);
         }
     }
 

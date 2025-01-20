@@ -80,6 +80,12 @@ public class StompProtocol implements StompMessagingProtocol<StompFrameAbstract>
 
     private void send(SendFrame frame) {
         String dest = frame.getHeaders().get("destination");
+        if (dest == null) {
+            ErrorFrame error = new ErrorFrame("missing destination", connectionId, null, frame);
+            connections.send(connectionId, error);
+            connections.disconnect(connectionId);
+            return;
+        }
         ConcurrentHashMap<String, ConcurrentHashMap<Integer, Boolean>> subscribers = connections.getChannelSub();
         if (!subscribers.get(dest).containsKey(connectionId)) {
             connections.send(connectionId, new ErrorFrame("user not subscribed to the channel", connectionId, null, frame));
@@ -88,16 +94,24 @@ public class StompProtocol implements StompMessagingProtocol<StompFrameAbstract>
 
         connections.sendAllSub(dest, frame);
 
-
-        if (dest == null) {
-            ErrorFrame error = new ErrorFrame("missing destination", connectionId, null, frame);
-            connections.send(connectionId, error);
-            connections.disconnect(connectionId);
-        }
-    //need to handle the errors here like the instructions
     }
 
-    private void subscribe(SubscribeFrame frame) { //IMPLEMENT
+    private void subscribe(SubscribeFrame frame) { 
+        String dest = frame.getHeaders().get("destination");
+        String subId = frame.getHeaders().get("id");
+        if (dest == null || subId == null) {
+            connections.send(connectionId, new ErrorFrame("missing destination or id", connectionId, null, frame));
+            connections.disconnect(connectionId);
+            return;
+        }
+
+        if (Integer.valueOf(subId) < 1) {
+            connections.send(connectionId, new ErrorFrame("incorrect id number", connectionId, null, frame));
+            connections.disconnect(connectionId);
+            return;
+        }
+
+        connections.subscribe(connectionId, dest, Integer.valueOf(subId));
         
     }
 
