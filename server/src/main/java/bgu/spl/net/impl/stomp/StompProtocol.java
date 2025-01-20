@@ -10,16 +10,17 @@ import bgu.spl.net.impl.stomp.Frame.SendFrame;
 import bgu.spl.net.impl.stomp.Frame.StompFrameAbstract;
 import bgu.spl.net.impl.stomp.Frame.SubscribeFrame;
 import bgu.spl.net.impl.stomp.Frame.UnsubscribeFrame;
-import bgu.spl.net.srv.Connections;
+import bgu.spl.net.srv.ConnectionsImpl;
 
 public class StompProtocol implements StompMessagingProtocol<StompFrameAbstract> {
     
     private boolean shouldTerminate = false;
-    private Connections<StompFrameAbstract> connections;
+    private ConnectionsImpl<StompFrameAbstract> connections;
     private int connectionId;
+    
 
     @Override
-    public void start(int connectionId, Connections<StompFrameAbstract> connections) {
+    public void start(int connectionId, ConnectionsImpl<StompFrameAbstract> connections) {
         this.connectionId = connectionId;
         this.connections = connections;
     }
@@ -49,6 +50,20 @@ public class StompProtocol implements StompMessagingProtocol<StompFrameAbstract>
         String passcode = frame.getHeaders().get("passcode");
         if (login == null || passcode == null) {
             connections.send(connectionId, new ErrorFrame("missing login or passcode", connectionId, null, frame));
+        }
+        String s = connections.checkUser(login);
+        if (s==null){
+             connections.addUser(login, passcode);
+        }
+        else {
+            if (passcode != s) {
+                connections.send(connectionId, new ErrorFrame("wrong password", connectionId, null, frame));
+        }   
+            else{
+                ;
+            }
+
+            }
         }
         connections.send(connectionId, new ConnectedFrame());
     }
