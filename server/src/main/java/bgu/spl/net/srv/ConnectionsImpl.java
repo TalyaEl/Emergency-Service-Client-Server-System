@@ -35,6 +35,9 @@ public class ConnectionsImpl<T> implements Connections<T> {
                 return false;
             }
         }
+        else {
+            return false;
+        }
         return true; 
     }
 
@@ -64,30 +67,38 @@ public class ConnectionsImpl<T> implements Connections<T> {
     public synchronized void subscribe(int connectionId, String channel, int subId) { //helper
         if (activeUsers.containsKey(connectionId)) { //checking if the user is active
             channelSubscribers.putIfAbsent(channel, new ConcurrentHashMap<>()); //if the channel doesn't exist, create it
-            channelSubscribers.get(channel).putIfAbsent(connectionId, true);
             userSubscriptions.putIfAbsent(connectionId, new ConcurrentHashMap<>()); //if the user has no subscriptions, create it
+            channelSubscribers.get(channel).putIfAbsent(connectionId, true);
             userSubscriptions.get(connectionId).putIfAbsent(channel, subId);
         }
     }
 
     public synchronized boolean unsubscribe(int connectionId, int subId) { //helper
         ConcurrentHashMap<String, Integer> subscriptions = userSubscriptions.get(connectionId);
-        String channel = "";
+        if (subscriptions == null) {
+            return false;
+        }
+        String channel = null;
         for (String s : subscriptions.keySet()) {
             if (subscriptions.get(s) == subId) {
                 channel = s;
+                break;
             }
         }
-        if (!channel.equals("")) {
+
+        if (channel != null) {
             userSubscriptions.get(connectionId).remove(channel);
-            channelSubscribers.get(channel).remove(connectionId);
+            ConcurrentHashMap<Integer, Boolean> subscribers = channelSubscribers.get(channel);
+            if (subscribers != null) {
+                subscribers.remove(connectionId);
+            }
             return true;
         }
        return false;
     }
 
     public synchronized String checkUser(String user) { //helper
-        if (loginInfo.contains(user))
+        if (loginInfo.containsKey(user))
           return loginInfo.get(user);
         return null;
     }
@@ -97,13 +108,19 @@ public class ConnectionsImpl<T> implements Connections<T> {
     }
 
     public synchronized String connectedUser(int connectionId) { //helper
-        return activeUsers.get(connectionId).getKey();
+        SimpleEntry<String, ConnectionHandler<T>> entry = activeUsers.get(connectionId);
+        if (entry == null) {
+            return null;
+        }
+        return entry.getKey();
     }
 
     public synchronized void addActiveUser(int connectionId, String user) { //helper
         SimpleEntry<String, ConnectionHandler<T>> entry = this.activeUsers.get(connectionId);
-        SimpleEntry<String, ConnectionHandler<T>> updatedEntry = new SimpleEntry<>(user, entry.getValue());
-        activeUsers.put(connectionId, updatedEntry);
+        if (entry != null) {
+            SimpleEntry<String, ConnectionHandler<T>> updatedEntry = new SimpleEntry<>(user, entry.getValue());
+            activeUsers.put(connectionId, updatedEntry);
+        }
     }
 
     public ConcurrentHashMap<String, ConcurrentHashMap<Integer, Boolean>> getChannelSub() { //helper

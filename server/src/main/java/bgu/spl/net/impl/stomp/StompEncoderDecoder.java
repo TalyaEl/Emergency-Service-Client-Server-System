@@ -5,11 +5,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import bgu.spl.net.api.MessageEncoderDecoder;
 import bgu.spl.net.impl.stomp.Frame.ConnectFrame;
-import bgu.spl.net.impl.stomp.Frame.ConnectedFrame;
 import bgu.spl.net.impl.stomp.Frame.DisconnectFrame;
-import bgu.spl.net.impl.stomp.Frame.ErrorFrame;
-import bgu.spl.net.impl.stomp.Frame.MessageFrame;
-import bgu.spl.net.impl.stomp.Frame.ReceiptFrame;
 import bgu.spl.net.impl.stomp.Frame.SendFrame;
 import bgu.spl.net.impl.stomp.Frame.StompFrameAbstract;
 import bgu.spl.net.impl.stomp.Frame.SubscribeFrame;
@@ -93,29 +89,17 @@ public class StompEncoderDecoder implements MessageEncoderDecoder<StompFrameAbst
                 String passcode = headers.get("passcode");
                 if (user == null || passcode == null) {throw new IllegalArgumentException("missing headers");}
                 return new ConnectFrame(user, passcode);
-            case "CONNECTED":
-                return new ConnectedFrame();
-            case "MESSAGE":
-                String sub = headers.get("subscription");
-                String id = headers.get("message-id");
-                String dest = headers.get("destination");
-                if (sub == null || id == null || dest == null) {throw new IllegalArgumentException("missing headers");}
-                return new MessageFrame(Integer.parseInt(sub), dest, body);
-            case "RECEIPT":
-                String clientid = headers.get("receipt-id");
-                if (clientid == null) {throw new IllegalArgumentException("missing headers");} 
-                return new ReceiptFrame(Integer.parseInt(clientid));
-            case "ERROR":
-                String msg = headers.get("message");
-                String receiptid = headers.get("receipt-id");
-                if (msg == null || receiptid == null) {throw new IllegalArgumentException("missing headers");} 
-                return new ErrorFrame(msg, Integer.parseInt(receiptid), body, null);
+
             case "SEND":
                 String topic = headers.get("destination");
+                System.out.println("DEBUG - Send destination received: " + topic);  // Add this
+
                 if (topic == null) {throw new IllegalArgumentException("missing headers");} 
                 return new SendFrame(body, topic);
             case "SUBSCRIBE":
                 String topic2 = headers.get("destination");
+                System.out.println("DEBUG - Subscribe destination received: " + topic2);  // Add this
+
                 String id2 = headers.get("id");
                 if (topic2 == null || id2 == null) {throw new IllegalArgumentException("missing headers");} 
                 return new SubscribeFrame(topic2, Integer.parseInt(id2));

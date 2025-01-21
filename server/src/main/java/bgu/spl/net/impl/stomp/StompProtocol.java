@@ -59,25 +59,22 @@ public class StompProtocol implements StompMessagingProtocol<StompFrameAbstract>
         String passcode = frame.getHeaders().get("passcode");
         if (login == null || passcode == null) {
             connections.send(connectionId, new ErrorFrame("Missing login or passcode", connectionId, null, frame));
+            connections.disconnect(connectionId);
             return;
         }
-        System.out.println("test7");
         String password = connections.checkUser(login);
         if (password == null) {
             connections.addUser(login, passcode); //new user
             connections.addActiveUser(connectionId, login); //pairs the user with handler
             connections.send(connectionId, new ConnectedFrame());
-            System.out.println("test9");
         }
 
         else if (!passcode.equals(password)) { //wrong password
-            System.out.println("test8");
             connections.send(connectionId, new ErrorFrame("Wrong password", connectionId, null, frame));
-            connections.disconnect(connectionId); //CHECK
+            connections.disconnect(connectionId); 
         }   
 
         else { //checks if the user already logged in         
-            System.out.println("test10");
             if (connections.connectedUser(connectionId) == null) { //checkes if the handler is availaible
                 connections.addActiveUser(connectionId, login); //pairs the user with handler
                 connections.send(connectionId, new ConnectedFrame());
@@ -98,9 +95,10 @@ public class StompProtocol implements StompMessagingProtocol<StompFrameAbstract>
             return;
         }
         ConcurrentHashMap<String, ConcurrentHashMap<Integer, Boolean>> channelSubscribers = connections.getChannelSub();
-        if (!channelSubscribers.get(dest).containsKey(connectionId)) {
+        if (!channelSubscribers.containsKey(dest) || !channelSubscribers.get(dest).containsKey(connectionId)) {
             connections.send(connectionId, new ErrorFrame("user not subscribed to the channel", connectionId, null, frame));
             //DISCONNECT?
+            return;
         }
 
         ConcurrentHashMap<Integer, ConcurrentHashMap<String, Integer>> userSubscriptions = connections.getSub();
