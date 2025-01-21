@@ -31,6 +31,7 @@ public class ConnectionsImpl<T> implements Connections<T> {
             ConnectionHandler<T> handler = activeUsers.get(connectionId).getValue();
             try {
                 handler.send(msg);
+                return true; 
             } catch (Exception e) {
                 return false;
             }
@@ -38,7 +39,7 @@ public class ConnectionsImpl<T> implements Connections<T> {
         else {
             return false;
         }
-        return true; 
+        
     }
 
     @Override
@@ -51,15 +52,12 @@ public class ConnectionsImpl<T> implements Connections<T> {
         if (activeUsers.containsKey(connectionId)) {
             ConnectionHandler<T> handler = activeUsers.get(connectionId).getValue();
             try {
-                handler.close(); //MAKE SURE
+                handler.close(); 
             } catch (IOException e) {}
         }
         activeUsers.remove(connectionId);
         for (String channel : channelSubscribers.keySet()) {
-            ConcurrentHashMap<Integer, Boolean> subscribers = channelSubscribers.get(channel);
-            if (subscribers != null) {
-                subscribers.remove(connectionId);
-            }
+            channelSubscribers.get(channel).remove(connectionId);
         }
         userSubscriptions.remove(connectionId);
     }
@@ -70,6 +68,8 @@ public class ConnectionsImpl<T> implements Connections<T> {
             userSubscriptions.putIfAbsent(connectionId, new ConcurrentHashMap<>()); //if the user has no subscriptions, create it
             channelSubscribers.get(channel).putIfAbsent(connectionId, true);
             userSubscriptions.get(connectionId).putIfAbsent(channel, subId);
+
+
         }
     }
 

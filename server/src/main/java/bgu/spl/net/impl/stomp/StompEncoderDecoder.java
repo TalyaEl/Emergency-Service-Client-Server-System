@@ -89,17 +89,12 @@ public class StompEncoderDecoder implements MessageEncoderDecoder<StompFrameAbst
                 String passcode = headers.get("passcode");
                 if (user == null || passcode == null) {throw new IllegalArgumentException("missing headers");}
                 return new ConnectFrame(user, passcode);
-
             case "SEND":
                 String topic = headers.get("destination");
-                System.out.println("DEBUG - Send destination received: " + topic);  // Add this
-
                 if (topic == null) {throw new IllegalArgumentException("missing headers");} 
                 return new SendFrame(body, topic);
             case "SUBSCRIBE":
                 String topic2 = headers.get("destination");
-                System.out.println("DEBUG - Subscribe destination received: " + topic2);  // Add this
-
                 String id2 = headers.get("id");
                 if (topic2 == null || id2 == null) {throw new IllegalArgumentException("missing headers");} 
                 return new SubscribeFrame(topic2, Integer.parseInt(id2));

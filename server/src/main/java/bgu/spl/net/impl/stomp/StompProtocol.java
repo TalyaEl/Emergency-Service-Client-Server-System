@@ -87,7 +87,12 @@ public class StompProtocol implements StompMessagingProtocol<StompFrameAbstract>
     }
 
     private void send(SendFrame frame) {
+
         String dest = frame.getHeaders().get("destination");
+        if (dest != null && dest.startsWith("/")) {
+            dest = dest.substring(1);
+        }
+
         if (dest == null) {
             ErrorFrame error = new ErrorFrame("Missing destination", connectionId, null, frame);
             connections.send(connectionId, error);
@@ -102,14 +107,20 @@ public class StompProtocol implements StompMessagingProtocol<StompFrameAbstract>
         }
 
         ConcurrentHashMap<Integer, ConcurrentHashMap<String, Integer>> userSubscriptions = connections.getSub();
-        for (Integer id : channelSubscribers.get(dest).keySet()) {
-            int subId = userSubscriptions.get(id).get(dest);
-            MessageFrame broadcast = new MessageFrame(subId, dest, frame.getBody()); //sending a message frame with each uniqe subId
-            if (!connections.send(subId, broadcast)) {
-                connections.send(connectionId, new ErrorFrame("couldn't send message - connection terminated", connectionId, null, frame));
-                connections.disconnect(connectionId);
+        ConcurrentHashMap<Integer, Boolean> destSub = channelSubscribers.get(dest);
+        if (!destSub.isEmpty()) {
+            for (Integer id : destSub.keySet()) {
+                ConcurrentHashMap<String, Integer> userSub = userSubscriptions.get(id);
+               if (!userSub.isEmpty()) {
+                int subId = userSub.get(dest);
+                MessageFrame broadcast = new MessageFrame(subId, dest, frame.getBody()); //sending a message frame with each uniqe subId
+                    if (!connections.send(connectionId, broadcast)) {
+                        connections.send(connectionId, new ErrorFrame("couldn't send message - connection terminated", connectionId, null, frame));
+                        connections.disconnect(connectionId);
+                    }
+               }
             }
-        }
+        } 
 
     }
 
@@ -117,6 +128,9 @@ public class StompProtocol implements StompMessagingProtocol<StompFrameAbstract>
         String dest = frame.getHeaders().get("destination");
         String subIdStr = frame.getHeaders().get("id");
         
+        if (dest != null && dest.startsWith("/")) {
+            dest = dest.substring(1);
+        }
 
         if (dest == null || subIdStr == null) {
             connections.send(connectionId, new ErrorFrame("Missing destination or id", connectionId, null, frame));
@@ -185,5 +199,6 @@ public class StompProtocol implements StompMessagingProtocol<StompFrameAbstract>
     public boolean shouldTerminate() {
         return shouldTerminate;
     }
+
 
 }
