@@ -40,15 +40,11 @@ public class StompEncoderDecoder implements MessageEncoderDecoder<StompFrameAbst
             throw new IllegalArgumentException("invalid stomp frame");
         }
 
-        String command = lines[0]; //the first line is always the sommand
+        String command = lines[0]; //the first line is always the command
         ConcurrentHashMap<String, String> headers = parseHeaders(lines);
         String body = parseBody(lines);
         StompFrameAbstract frame = createFrame(command, headers, body);
         return frame;
-
-        // String commandLine = new String(bytes, 0, findEndOfLine(bytes, 0), StandardCharsets.UTF_8).trim();
-        // StompFrameAbstract frame = null;
-
 
     }
 

@@ -63,7 +63,7 @@ public class StompProtocol implements StompMessagingProtocol<StompFrameAbstract>
 
         else if (!passcode.equals(password)) { //wrong password
             connections.send(connectionId, new ErrorFrame("wrong password", connectionId, null, frame));
-            connections.disconnect(connectionId);
+            connections.disconnect(connectionId); //CHECK
         }   
 
         else { //checks if the user already logged in
@@ -86,13 +86,21 @@ public class StompProtocol implements StompMessagingProtocol<StompFrameAbstract>
             connections.disconnect(connectionId);
             return;
         }
-        ConcurrentHashMap<String, ConcurrentHashMap<Integer, Boolean>> subscribers = connections.getChannelSub();
-        if (!subscribers.get(dest).containsKey(connectionId)) {
+        ConcurrentHashMap<String, ConcurrentHashMap<Integer, Boolean>> channelSubscribers = connections.getChannelSub();
+        if (!channelSubscribers.get(dest).containsKey(connectionId)) {
             connections.send(connectionId, new ErrorFrame("user not subscribed to the channel", connectionId, null, frame));
             //DISCONNECT?
         }
 
-        connections.sendAllSub(dest, frame);
+        ConcurrentHashMap<Integer, ConcurrentHashMap<String, Integer>> userSubscriptions = connections.getSub();
+        for (Integer id : channelSubscribers.get(dest).keySet()) {
+            int subId = userSubscriptions.get(id).get(dest);
+            MessageFrame broadcast = new MessageFrame(subId, dest, frame.getBody()); //sending a message frame with each uniqe subId
+            if (!connections.send(subId, broadcast)) {
+                connections.send(connectionId, new ErrorFrame("couldn't send message - connection terminated", connectionId, null, frame));
+                connections.disconnect(connectionId);
+            }
+        }
 
     }
 
@@ -115,14 +123,29 @@ public class StompProtocol implements StompMessagingProtocol<StompFrameAbstract>
         
     }
 
-    private void unsubscribe(UnsubscribeFrame frame) { //IMPLEMENT
-
+    private void unsubscribe(UnsubscribeFrame frame) { 
+        String subId = frame.getHeaders().get("id");
+        if (subId == null || Integer.valueOf(subId) < 1) {
+            connections.send(connectionId, new ErrorFrame("missing id", connectionId, null, frame));
+            connections.disconnect(connectionId);
+            return;
+        }
+        if (!connections.unsubscribe(connectionId, Integer.valueOf(subId))) {
+            connections.send(connectionId, new ErrorFrame("not subscribe to channel", connectionId, null, frame));
+        }
     }
 
     private void disconnect(DisconnectFrame frame) {
-        this.shouldTerminate = true;
         String receiptId = frame.getHeaders().get("receipt");
-        connections.send(connectionId, new ReceiptFrame(Integer.parseInt(receiptId)));
+        if (receiptId == null || Integer.valueOf(receiptId) < 1) {
+            connections.send(connectionId, new ErrorFrame("missing receipt id", connectionId, null, frame));
+            connections.disconnect(connectionId);
+            return;
+        }
+
+        this.shouldTerminate = true;
+        
+        connections.send(connectionId, new ReceiptFrame(Integer.valueOf(receiptId)));
         connections.disconnect(connectionId);
     }
 

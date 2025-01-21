@@ -3,9 +3,6 @@ import java.io.IOException;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.concurrent.ConcurrentHashMap;
 
-import bgu.spl.net.impl.stomp.Frame.MessageFrame;
-import bgu.spl.net.impl.stomp.Frame.StompFrameAbstract;
-
 public class ConnectionsImpl<T> implements Connections<T> {
     private ConcurrentHashMap<String, String> loginInfo;
     private ConcurrentHashMap<Integer, SimpleEntry<String, ConnectionHandler<T>>> activeUsers;
@@ -34,26 +31,16 @@ public class ConnectionsImpl<T> implements Connections<T> {
             ConnectionHandler<T> handler = activeUsers.get(connectionId).getValue();
             try {
                 handler.send(msg);
-            } catch (IllegalStateException e) {
-                disconnect(connectionId);
+            } catch (Exception e) {
                 return false;
             }
         }
-        return true; //maybe adding error frame here?
+        return true; 
     }
 
     @Override
     public void sendAllSub(String channel, T msg) {
-        //getting the body
-        String frameString = msg.toString();
-        String[] lines = frameString.split("\n");
-        String body = parseBody(lines);
-        //for each connection id, crating message frame and send to the subscriber
-        for (Integer id : channelSubscribers.get(channel).keySet()) {
-            int subId = userSubscriptions.get(id).get(channel);
-            MessageFrame broadcast = new MessageFrame(subId, channel, body);
-            send((int)id, broadcast);
-        }
+        return; //chose not to use this function at all
     }
 
     @Override
@@ -71,6 +58,7 @@ public class ConnectionsImpl<T> implements Connections<T> {
                 subscribers.remove(connectionId);
             }
         }
+        userSubscriptions.remove(connectionId);
     }
 
     public synchronized void subscribe(int connectionId, String channel, int subId) { //helper
@@ -82,11 +70,20 @@ public class ConnectionsImpl<T> implements Connections<T> {
         }
     }
 
-    public synchronized void unsubscribe(int connectionId, String channel) { //helper
-        ConcurrentHashMap<Integer, Boolean> subscribers = channelSubscribers.get(channel);
-        if (subscribers != null) {
-            subscribers.remove(connectionId);
+    public synchronized boolean unsubscribe(int connectionId, int subId) { //helper
+        ConcurrentHashMap<String, Integer> subscriptions = userSubscriptions.get(connectionId);
+        String channel = "";
+        for (String s : subscriptions.keySet()) {
+            if (subscriptions.get(s) == subId) {
+                channel = s;
+            }
         }
+        if (channel != "") {
+            userSubscriptions.get(connectionId).remove(channel);
+            channelSubscribers.get(channel).remove(connectionId);
+            return true;
+        }
+       return false;
     }
 
     public synchronized String checkUser(String user) { //helper
@@ -99,7 +96,7 @@ public class ConnectionsImpl<T> implements Connections<T> {
         loginInfo.put(username, password);
     }
 
-    public String connectedUser(int connectionId) { //helper
+    public synchronized String connectedUser(int connectionId) { //helper
         return activeUsers.get(connectionId).getKey();
     }
 
@@ -117,25 +114,5 @@ public class ConnectionsImpl<T> implements Connections<T> {
         return this.userSubscriptions;
     }
 
-    private String parseBody(String[] lines) {
-        StringBuilder bodybuild = new StringBuilder();
-        int bodyStartIndex = -1;
-        //checking where is the end of the headers, between the headers and the body there's an empty line
-        for (int i = 1; i < lines.length; i++) { 
-            if (lines[i].trim().isEmpty()) {
-                bodyStartIndex = i + 1;
-                break;
-            }
-        }
-
-        if (bodyStartIndex == -1 || bodyStartIndex >= lines.length) { //there's no body
-            return "";
-        }
-
-        for (int i = bodyStartIndex; i < lines.length; i++) { //creating the body
-            bodybuild.append(lines[i].trim()).append("\n");
-        }
-        return bodybuild.toString();
-    }
 
 }
