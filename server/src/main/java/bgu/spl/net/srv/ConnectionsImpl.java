@@ -78,7 +78,7 @@ public class ConnectionsImpl<T> implements Connections<T> {
                 channel = s;
             }
         }
-        if (channel != "") {
+        if (!channel.equals("")) {
             userSubscriptions.get(connectionId).remove(channel);
             channelSubscribers.get(channel).remove(connectionId);
             return true;
