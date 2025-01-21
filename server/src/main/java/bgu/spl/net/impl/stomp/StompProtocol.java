@@ -34,16 +34,22 @@ public class StompProtocol implements StompMessagingProtocol<StompFrameAbstract>
         switch (command) {
             case "CONNECT":
                 connect((ConnectFrame) msg);
+                break;
             case "SEND":
                 send((SendFrame) msg);
+                break;
             case "SUBSCRIBE":
                 subscribe((SubscribeFrame) msg);
+                break;
             case "UNSUBSCRIBE":
                 unsubscribe((UnsubscribeFrame) msg);
+                break;
             case "DISCONNECT":
                 disconnect((DisconnectFrame) msg);
+                break;
             default:
-                connections.send(connectionId, new ErrorFrame("unknown command:" + command, connectionId, null, msg)); 
+                connections.send(connectionId, new ErrorFrame("unknown command:" + command, connectionId, null, msg));
+                break; 
                 
         }
     }
