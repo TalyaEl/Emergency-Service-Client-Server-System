@@ -5,19 +5,40 @@ import bgu.spl.net.srv.Server;
 public class StompServer {
 
     public static void main(String[] args) {
-        if (args[1].equals("tpc")) {
+        if (args.length != 2) {
+            System.out.println("Usage: StompServer <port> <server type (tpc/reactor)>");
+            return;
+        }
+    
+        // Parse the port
+        int port;
+        try {
+            port = Integer.parseInt(args[0]);
+        } catch (NumberFormatException ex) {
+            System.out.println("Invalid port number");
+            return;
+        }
+    
+        // Check server type
+        String serverType = args[1];
+        if (!serverType.equals("tpc") && !serverType.equals("reactor")) {
+            System.out.println("Server type must be either 'tpc' or 'reactor'");
+            return;
+        }
+
+        if (serverType.equals("tpc")) {
             Server.threadPerClient(
-                Integer.parseInt(args[0]), //port
+                port, //port
                 () -> new StompProtocol(), //protocol factory
                 StompEncoderDecoder::new //message encoder decoder factory
             ).serve();
         }
-        else if (args[1].equals("reactor")) {
+        else if (serverType.equals("reactor")) {
             Server.reactor(
-                 Runtime.getRuntime().availableProcessors(),
-                 Integer.parseInt(args[0]), //port
-                 () -> new StompProtocol(), //protocol factory
-                 StompEncoderDecoder::new //message encoder decoder factory
+                Runtime.getRuntime().availableProcessors(),
+                port, //port
+                () -> new StompProtocol(), //protocol factory
+                StompEncoderDecoder::new //message encoder decoder factory
             ).serve();
         }
         else {

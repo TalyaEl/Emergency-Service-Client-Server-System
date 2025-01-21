@@ -104,8 +104,9 @@ public class Reactor<T> implements Server<T> {
                 protocolFactory.get(),
                 clientChan,
                 this);
-        handler.getProtocol().start(connectionId.getAndIncrement(), connections);
-        connections.addConnection(connectionId.get(), handler);
+        int connectId = connectionId.getAndIncrement();
+        handler.getProtocol().start(connectId, connections);
+        connections.addConnection(connectId, handler);
         clientChan.register(selector, SelectionKey.OP_READ, handler);
     }
 

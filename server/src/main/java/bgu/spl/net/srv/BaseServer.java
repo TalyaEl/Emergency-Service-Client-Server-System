@@ -45,8 +45,9 @@ public abstract class BaseServer<T> implements Server<T> {
                         clientSock,
                         encdecFactory.get(),
                         protocolFactory.get());
-                handler.getProtocol().start(connectionId.getAndIncrement(), connections);
-                connections.addConnection(connectionId.get(), handler);
+                int connectId = connectionId.getAndIncrement();
+                handler.getProtocol().start(connectId, connections);
+                connections.addConnection(connectId, handler);
                 execute(handler);
             }
         } catch (IOException ex) {
