@@ -51,8 +51,9 @@ public class StompProtocol implements StompMessagingProtocol<StompFrameAbstract>
     private void connect(ConnectFrame frame) {
         String login = frame.getHeaders().get("login");
         String passcode = frame.getHeaders().get("passcode");
+        
         if (login == null || passcode == null) {
-            connections.send(connectionId, new ErrorFrame("missing login or passcode", connectionId, null, frame));
+            connections.send(connectionId, new ErrorFrame("Missing login or passcode", connectionId, null, frame));
             return;
         }
 
@@ -62,7 +63,7 @@ public class StompProtocol implements StompMessagingProtocol<StompFrameAbstract>
         }
 
         else if (!passcode.equals(password)) { //wrong password
-            connections.send(connectionId, new ErrorFrame("wrong password", connectionId, null, frame));
+            connections.send(connectionId, new ErrorFrame("Wrong password", connectionId, null, frame));
             connections.disconnect(connectionId); //CHECK
         }   
 
@@ -72,7 +73,7 @@ public class StompProtocol implements StompMessagingProtocol<StompFrameAbstract>
                 connections.send(connectionId, new ConnectedFrame());
             }
             else { 
-                connections.send(connectionId, new ErrorFrame("user already logged in", connectionId, null, frame));
+                connections.send(connectionId, new ErrorFrame("User already logged in", connectionId, null, frame));
                 connections.disconnect(connectionId);
             }
         }
@@ -81,7 +82,7 @@ public class StompProtocol implements StompMessagingProtocol<StompFrameAbstract>
     private void send(SendFrame frame) {
         String dest = frame.getHeaders().get("destination");
         if (dest == null) {
-            ErrorFrame error = new ErrorFrame("missing destination", connectionId, null, frame);
+            ErrorFrame error = new ErrorFrame("Missing destination", connectionId, null, frame);
             connections.send(connectionId, error);
             connections.disconnect(connectionId);
             return;
@@ -106,46 +107,69 @@ public class StompProtocol implements StompMessagingProtocol<StompFrameAbstract>
 
     private void subscribe(SubscribeFrame frame) { 
         String dest = frame.getHeaders().get("destination");
-        String subId = frame.getHeaders().get("id");
-        if (dest == null || subId == null) {
-            connections.send(connectionId, new ErrorFrame("missing destination or id", connectionId, null, frame));
+        String subIdStr = frame.getHeaders().get("id");
+        
+
+        if (dest == null || subIdStr == null) {
+            connections.send(connectionId, new ErrorFrame("Missing destination or id", connectionId, null, frame));
             connections.disconnect(connectionId);
             return;
         }
 
-        if (Integer.valueOf(subId) < 1) {
-            connections.send(connectionId, new ErrorFrame("incorrect id number", connectionId, null, frame));
+        int subId;
+        try {
+            subId = Integer.valueOf(subIdStr);
+        } catch (NumberFormatException e) {
+            connections.send(connectionId, new ErrorFrame("Invalid subscription id", connectionId, null, frame));
             connections.disconnect(connectionId);
             return;
         }
 
-        connections.subscribe(connectionId, dest, Integer.valueOf(subId));
+        connections.subscribe(connectionId, dest, subId);
         
     }
 
     private void unsubscribe(UnsubscribeFrame frame) { 
-        String subId = frame.getHeaders().get("id");
-        if (subId == null || Integer.valueOf(subId) < 1) {
-            connections.send(connectionId, new ErrorFrame("missing id", connectionId, null, frame));
+        String subIdStr = frame.getHeaders().get("id");
+        if (subIdStr == null) {
+            connections.send(connectionId, new ErrorFrame("Missing id", connectionId, null, frame));
             connections.disconnect(connectionId);
             return;
         }
+
+        int subId;
+        try {
+            subId = Integer.valueOf(subIdStr);
+        } catch (NumberFormatException e) {
+            connections.send(connectionId, new ErrorFrame("Invalid subscription id", connectionId, null, frame));
+            connections.disconnect(connectionId);
+            return;
+        }
+
         if (!connections.unsubscribe(connectionId, Integer.valueOf(subId))) {
-            connections.send(connectionId, new ErrorFrame("not subscribe to channel", connectionId, null, frame));
+            connections.send(connectionId, new ErrorFrame("Not subscribe to channel", connectionId, null, frame));
         }
     }
 
     private void disconnect(DisconnectFrame frame) {
-        String receiptId = frame.getHeaders().get("receipt");
-        if (receiptId == null || Integer.valueOf(receiptId) < 1) {
-            connections.send(connectionId, new ErrorFrame("missing receipt id", connectionId, null, frame));
+        String receiptIdStr = frame.getHeaders().get("receipt");
+        if (receiptIdStr == null) {
+            connections.send(connectionId, new ErrorFrame("Missing receipt id", connectionId, null, frame));
             connections.disconnect(connectionId);
             return;
         }
 
-        this.shouldTerminate = true;
+        int receiptId;
+        try {
+            receiptId = Integer.valueOf(receiptIdStr);
+        } catch (NumberFormatException e) {
+            connections.send(connectionId, new ErrorFrame("Invalid receipt id", connectionId, null, frame));
+            connections.disconnect(connectionId);
+            return;
+        }
         
         connections.send(connectionId, new ReceiptFrame(Integer.valueOf(receiptId)));
+        this.shouldTerminate = true;
         connections.disconnect(connectionId);
     }
 
