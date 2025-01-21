@@ -55,10 +55,8 @@ public class Reactor<T> implements Server<T> {
 			System.out.println("Server started");
 
             while (!Thread.currentThread().isInterrupted()) {
-
                 selector.select();
                 runSelectionThreadTasks();
-
                 for (SelectionKey key : selector.selectedKeys()) {
 
                     if (!key.isValid()) {

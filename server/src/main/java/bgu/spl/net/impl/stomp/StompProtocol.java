@@ -57,23 +57,27 @@ public class StompProtocol implements StompMessagingProtocol<StompFrameAbstract>
     private void connect(ConnectFrame frame) {
         String login = frame.getHeaders().get("login");
         String passcode = frame.getHeaders().get("passcode");
-        
         if (login == null || passcode == null) {
             connections.send(connectionId, new ErrorFrame("Missing login or passcode", connectionId, null, frame));
             return;
         }
-
+        System.out.println("test7");
         String password = connections.checkUser(login);
         if (password == null) {
-             connections.addUser(login, passcode); //new user
+            connections.addUser(login, passcode); //new user
+            connections.addActiveUser(connectionId, login); //pairs the user with handler
+            connections.send(connectionId, new ConnectedFrame());
+            System.out.println("test9");
         }
 
         else if (!passcode.equals(password)) { //wrong password
+            System.out.println("test8");
             connections.send(connectionId, new ErrorFrame("Wrong password", connectionId, null, frame));
             connections.disconnect(connectionId); //CHECK
         }   
 
-        else { //checks if the user already logged in
+        else { //checks if the user already logged in         
+            System.out.println("test10");
             if (connections.connectedUser(connectionId) == null) { //checkes if the handler is availaible
                 connections.addActiveUser(connectionId, login); //pairs the user with handler
                 connections.send(connectionId, new ConnectedFrame());
