@@ -107,12 +107,13 @@ public class ConnectionsImpl<T> implements Connections<T> {
         loginInfo.put(username, password);
     }
 
-    public synchronized String connectedUser(int connectionId) { //helper
-        SimpleEntry<String, ConnectionHandler<T>> entry = activeUsers.get(connectionId);
-        if (entry == null) {
-            return null;
+    public synchronized String connectedUser(String login) { //helper
+        for (Integer i: activeUsers.keySet()) {
+            if (activeUsers.get(i).getKey().equals(login)) {
+                return login;
+            }
         }
-        return entry.getKey();
+        return null;
     }
 
     public synchronized void addActiveUser(int connectionId, String user) { //helper

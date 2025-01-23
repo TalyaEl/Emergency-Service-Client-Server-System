@@ -72,16 +72,18 @@ public class StompProtocol implements StompMessagingProtocol<StompFrameAbstract>
         else if (!passcode.equals(password)) { //wrong password
             connections.send(connectionId, new ErrorFrame("Wrong password", connectionId, null, frame));
             connections.disconnect(connectionId); 
+            return;
         }   
 
         else { //checks if the user already logged in         
-            if (connections.connectedUser(connectionId) == null) { //checkes if the handler is availaible
+            if (connections.connectedUser(login) == null) { //checkes if the user is availaible
                 connections.addActiveUser(connectionId, login); //pairs the user with handler
                 connections.send(connectionId, new ConnectedFrame());
             }
             else { 
                 connections.send(connectionId, new ErrorFrame("User already logged in", connectionId, null, frame));
                 connections.disconnect(connectionId);
+                return;
             }
         }
     }
