@@ -168,7 +168,7 @@ public class StompProtocol implements StompMessagingProtocol<StompFrameAbstract>
             return;
         }
 
-        if (!connections.unsubscribe(connectionId, Integer.valueOf(subId))) {
+        if (!connections.unsubscribe(connectionId, subId)) {
             connections.send(connectionId, new ErrorFrame("Not subscribe to channel", connectionId, null, frame));
         }
     }
@@ -184,15 +184,12 @@ public class StompProtocol implements StompMessagingProtocol<StompFrameAbstract>
         int receiptId;
         try {
             receiptId = Integer.valueOf(receiptIdStr);
+            connections.send(connectionId, new ReceiptFrame(receiptId));
+            this.shouldTerminate = true;
+            connections.disconnect(connectionId);
         } catch (NumberFormatException e) {
             connections.send(connectionId, new ErrorFrame("Invalid receipt id", connectionId, null, frame));
-            connections.disconnect(connectionId);
-            return;
         }
-        
-        connections.send(connectionId, new ReceiptFrame(Integer.valueOf(receiptId)));
-        this.shouldTerminate = true;
-        connections.disconnect(connectionId);
     }
 
     @Override

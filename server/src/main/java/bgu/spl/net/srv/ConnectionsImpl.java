@@ -51,15 +51,13 @@ public class ConnectionsImpl<T> implements Connections<T> {
     public synchronized void disconnect(int connectionId) {
         if (activeUsers.containsKey(connectionId)) {
             ConnectionHandler<T> handler = activeUsers.get(connectionId).getValue();
+            activeUsers.remove(connectionId);
             try {
                 handler.close(); 
             } catch (IOException e) {}
         }
-        activeUsers.remove(connectionId);
-        for (String channel : channelSubscribers.keySet()) {
-            channelSubscribers.get(channel).remove(connectionId);
-        }
         userSubscriptions.remove(connectionId);
+        channelSubscribers.values().forEach(channel -> channel.remove(connectionId));
     }
 
     public synchronized void subscribe(int connectionId, String channel, int subId) { //helper
