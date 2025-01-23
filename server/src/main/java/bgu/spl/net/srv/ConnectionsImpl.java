@@ -50,25 +50,27 @@ public class ConnectionsImpl<T> implements Connections<T> {
     @Override
     public synchronized void disconnect(int connectionId) {
         if (activeUsers.containsKey(connectionId)) {
-            ConnectionHandler<T> handler = activeUsers.get(connectionId).getValue();
             activeUsers.remove(connectionId);
-            try {
-                handler.close(); 
-            } catch (IOException e) {}
         }
         userSubscriptions.remove(connectionId);
         channelSubscribers.values().forEach(channel -> channel.remove(connectionId));
     }
 
-    public synchronized void subscribe(int connectionId, String channel, int subId) { //helper
+    public synchronized boolean subscribe(int connectionId, String channel, int subId) { //helper
         if (activeUsers.containsKey(connectionId)) { //checking if the user is active
             channelSubscribers.putIfAbsent(channel, new ConcurrentHashMap<>()); //if the channel doesn't exist, create it
             userSubscriptions.putIfAbsent(connectionId, new ConcurrentHashMap<>()); //if the user has no subscriptions, create it
+            
+            ConcurrentHashMap<String, Integer> userSub = userSubscriptions.get(connectionId);
+            if (userSub.containsKey(channel)) {
+                return false;
+            }
+
             channelSubscribers.get(channel).putIfAbsent(connectionId, true);
-            userSubscriptions.get(connectionId).putIfAbsent(channel, subId);
-
-
+            userSub.put(channel, subId);
+            return true;
         }
+        return false;
     }
 
     public synchronized boolean unsubscribe(int connectionId, int subId) { //helper

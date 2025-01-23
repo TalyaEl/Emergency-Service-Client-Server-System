@@ -147,7 +147,10 @@ public class StompProtocol implements StompMessagingProtocol<StompFrameAbstract>
             return;
         }
 
-        connections.subscribe(connectionId, dest, subId);
+        if (!connections.subscribe(connectionId, dest, subId)) {
+            connections.send(connectionId, new ErrorFrame("User already subscribed to this channel", connectionId, null, frame));
+            return;
+        }
         
     }
 
@@ -185,8 +188,8 @@ public class StompProtocol implements StompMessagingProtocol<StompFrameAbstract>
         try {
             receiptId = Integer.valueOf(receiptIdStr);
             connections.send(connectionId, new ReceiptFrame(receiptId));
-            this.shouldTerminate = true;
             connections.disconnect(connectionId);
+            this.shouldTerminate = true;
         } catch (NumberFormatException e) {
             connections.send(connectionId, new ErrorFrame("Invalid receipt id", connectionId, null, frame));
         }
