@@ -9,9 +9,6 @@ public class ErrorFrame extends StompFrameAbstract {
         if (frame.getHeaders().containsKey("receipt")) {
             this.headers.put("receipt-id", frame.getHeaders().get("receipt"));
         }
-        else {
-            this.headers.put("receipt-id", String.valueOf(clientID));
-        }
         this.headers.put("message", error);
         //building the body according to the example
         StringBuilder bodyB = new StringBuilder();

@@ -1,5 +1,4 @@
 package bgu.spl.net.srv;
-import java.io.IOException;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.concurrent.ConcurrentHashMap;
 
