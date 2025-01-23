@@ -116,9 +116,9 @@ public class StompProtocol implements StompMessagingProtocol<StompFrameAbstract>
                if (!userSub.isEmpty()) {
                 int subId = userSub.get(dest);
                 MessageFrame broadcast = new MessageFrame(subId, dest, frame.getBody()); //sending a message frame with each uniqe subId
-                    if (!connections.send(connectionId, broadcast)) {
-                        connections.send(connectionId, new ErrorFrame("couldn't send message - connection terminated", connectionId, null, frame));
-                        connections.disconnect(connectionId);
+                    if (!connections.send(id, broadcast)) {
+                        connections.send(id, new ErrorFrame("couldn't send message - connection terminated", connectionId, null, frame));
+                        connections.disconnect(id);
                     }
                }
             }

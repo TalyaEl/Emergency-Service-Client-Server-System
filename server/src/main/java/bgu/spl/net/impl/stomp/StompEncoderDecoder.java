@@ -17,7 +17,7 @@ public class StompEncoderDecoder implements MessageEncoderDecoder<StompFrameAbst
     @Override
     public StompFrameAbstract decodeNextByte(byte nextByte) {
         buffer.put(nextByte);
-        if (nextByte == '\0') {
+        if (nextByte == '\u0000') {
             buffer.flip();
             StompFrameAbstract frame = decodeFrame(buffer);
             buffer.clear();

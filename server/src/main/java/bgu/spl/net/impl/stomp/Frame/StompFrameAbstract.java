@@ -40,7 +40,7 @@ public abstract class StompFrameAbstract {
         if (body != "") {
             ans.append(body + "\n");
         }
-        ans.append("\n" + '\0'); // Null character to terminate the frame
+        ans.append("\n" + '\u0000'); // Null character to terminate the frame
         return ans.toString();
     }
 
