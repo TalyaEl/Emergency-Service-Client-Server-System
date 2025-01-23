@@ -91,9 +91,9 @@ public class StompProtocol implements StompMessagingProtocol<StompFrameAbstract>
     private void send(SendFrame frame) {
 
         String dest = frame.getHeaders().get("destination");
-        if (dest != null && dest.startsWith("/")) {
-            dest = dest.substring(1);
-        }
+        // if (dest != null && dest.startsWith("/")) {
+        //     dest = dest.substring(1);
+        // }
 
         if (dest == null) {
             ErrorFrame error = new ErrorFrame("Missing destination", connectionId, null, frame);
@@ -130,9 +130,9 @@ public class StompProtocol implements StompMessagingProtocol<StompFrameAbstract>
         String dest = frame.getHeaders().get("destination");
         String subIdStr = frame.getHeaders().get("id");
         
-        if (dest != null && dest.startsWith("/")) {
-            dest = dest.substring(1);
-        }
+        // if (dest != null && dest.startsWith("/")) {
+        //     dest = dest.substring(1);
+        // }
 
         if (dest == null || subIdStr == null) {
             connections.send(connectionId, new ErrorFrame("Missing destination or id", connectionId, null, frame));
