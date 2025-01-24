@@ -10,6 +10,7 @@ using std::atomic;
 
 class ConnectionHandler;
 class StompProtocol;
+class StompFrame;
 
 class StompClient {
 private:
@@ -19,12 +20,11 @@ private:
     atomic<bool> is_running{true};
 
     void read_from_socket();
-    void process_keyboard_input();
-
+    void handleLogin(const vector<string>& args);
 public:
     StompClient();
     ~StompClient();
 
-    void connect(const std::string& host, short port);
+    void process_keyboard_input();
     void stop();
 };
