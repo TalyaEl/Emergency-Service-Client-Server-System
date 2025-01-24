@@ -14,7 +14,7 @@ private:
 public:
     //constructors:
     StompFrame() = default; //THINK ABOUT IT
-    StompFrame(string cmd, vector<string, string> hdrs, string frameBody);
+    StompFrame(string cmd, map<string, string> hdrs, string frameBody);
 
     static StompFrame parse(const string& stringFrame);
 
