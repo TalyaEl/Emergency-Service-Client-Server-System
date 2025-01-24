@@ -30,6 +30,7 @@ public class StompProtocol implements StompMessagingProtocol<StompFrameAbstract>
 
     @Override
     public void process(StompFrameAbstract msg) {
+        System.out.println("tttttttttttttttttttttttttttttttttttttttt");
         String command = msg.getCommand();
         switch (command) {
             case "CONNECT":

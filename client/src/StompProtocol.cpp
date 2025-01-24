@@ -1,5 +1,6 @@
 #include "../include/StompProtocol.h"
 #include "../include/ConnectionHandler.h"
+#include "../include/StompFrame.h"
 #include <iostream>
 #include <string>
 #include <vector>
@@ -13,7 +14,7 @@ using namespace std;
 //std::map<string,int > channelSubs; // hashmap for <channel, subscriptionId>
 // std::vector<string> myChannels;
 // std::vector<Event> events;
-enum Command {
+enum keyCommand {
     login,
     join,
     exitChannel,
@@ -21,8 +22,7 @@ enum Command {
     logout,
     summary
 };
-
-Command stringToCommand(const std::string& command) {
+keyCommand keyStringToCommand(const std::string& command) {
     if (command == "login") return login;
     if (command == "join") return join;
     if (command == "exit") return exitChannel;
@@ -30,16 +30,14 @@ Command stringToCommand(const std::string& command) {
     if (command == "logout") return logout;
     if (command == "summary") return summary;
 }
-
-StompProtocol::StompProtocol(int Id, string name): 
-handler(),connectionId(Id),username(name),isLoggedIn(false),
+StompProtocol::StompProtocol(int Id): 
+handler(),connectionId(Id),username(),isLoggedIn(false),
 nextSubsctiptionId(1),channelSubs(),myChannels(),events()
 {}
-
-void StompProtocol::frameNav(const std::vector<string>& args){
+void StompProtocol::proccesKeyboardInput(const std::vector<string>& args){
         string frameType= args[0];
-        switch (stringToCommand(frameType)) {
-            case Command::login:
+        switch (keyStringToCommand(frameType)) {
+            case keyCommand::login:
                 if(args.size()==4){
                     login(args[1],args[2],args[3]);
                 }
@@ -47,7 +45,7 @@ void StompProtocol::frameNav(const std::vector<string>& args){
                     cout << "login command needs 3 args: {host:port} {username} {password}";
                 }
                 break;
-            case Command::join:
+            case keyCommand::join:
                 if(args.size()==2){
                     join(args[1]);
                 }
@@ -55,7 +53,7 @@ void StompProtocol::frameNav(const std::vector<string>& args){
                     cout << "join command needs 1 args: {channel_name}";
                 }
                 break;
-            case Command::exitChannel:
+            case keyCommand::exitChannel:
                 if(args.size()==2){
                     exit(args[1]);
                 }
@@ -63,7 +61,7 @@ void StompProtocol::frameNav(const std::vector<string>& args){
                     cout << "exit command needs 1 args: {channel_name}";
                 }
                 break;
-            case Command::report:
+            case keyCommand::report:
                 if(args.size()==2){
                     report(args[1]);
                 }
@@ -71,10 +69,10 @@ void StompProtocol::frameNav(const std::vector<string>& args){
                     cout << "report command needs 1 args: {file}";
                 }
                 break;
-            case Command::logout:
+            case keyCommand::logout:
                 logout();
                 break;
-            case Command::summary:
+            case keyCommand::summary:
                 if(args.size()==3){
                     summary(args[1], args[2], args[3]);
                 }
@@ -87,47 +85,56 @@ void StompProtocol::frameNav(const std::vector<string>& args){
                 break;
         }
 }
-
-
-bool StompProtocol::login(string hostPort, string username, string password){
-   // short myPort= std::stoi(port);
+StompFrame StompProtocol::login(string hostPort, string user, string password){
+    size_t i= hostPort.find(":");
+    string host= hostPort.substr(0,i);
+    string port= hostPort.substr(i+1);
+    short portNum= std::stoi(port);
     bool ans;
     if(isLoggedIn==true){
         cout << "The client is already logged in, log out before trying again";
-        return false;
+        StompFrame frame(nullptr, {"",""}, "");
+        return frame;
     }
     else{
-        isLoggedIn=true;
-        this->handler= new ConnectionHandler(host, myPort);
+        username=user;
+        this->handler= new ConnectionHandler(host, portNum);
         ans=handler->connect();
         if(ans==true){
             //sent connect frame
-            cout << "Login succesful";
-            return true;
+            map<string, string> hdrs;
+            hdrs.insert({"accept-version","1.2"});
+            hdrs.insert({"host","stomp.cs.bgu.ac.il"});
+            hdrs.insert({"login",username});
+            hdrs.insert({"passcode", password});
+            StompFrame frame("CONNECT", hdrs, "\n");//create connection frame//check if needed a recipt frame;    
+            return frame;
         }
-        else return false;
     }
 }
-bool StompProtocol::join(string channel){
+StompFrame StompProtocol::join(string channel){
     if(isLoggedIn==false){ //if not logged in ask the user to log in first
         cout << "please login first";
-        return false;
+        StompFrame frame(nullptr, {"",""}, "");
+        return frame;
     }
 
     if(isSubscribed(channel)){     //check correct input data
         cout << "cannot subscribe to a channel you are already subscribed to";
-        return false;
+        StompFrame frame(nullptr, {"",""}, "");
+        return frame;
     }
-    
-    string frame = "SUBSCRIBE\n" + string("destination:") + channel + "\n" + "id:"
-     + to_string(nextSubsctiptionId) + "\n" +"\0"; //create subscription frame//check if needed a recipt frame;    
-    bool ans= handler->sendFrameAscii(frame,'\0'); // send using handler.sendFrameAscii
+    map<string, string> hdrs;
+    hdrs.insert({"destination",channel});
+    hdrs.insert({"id",to_string(nextSubsctiptionId)});
+    StompFrame frame("SUBSCRIBE", hdrs, "\n");//create subscription frame//check if needed a recipt frame; 
+    return frame;   
+    bool ans= handler->sendFrameAscii(frame.serialize(),'\0'); // send using handler.sendFrameAscii
     if(ans){//if was sent:
         myChannels.push_back(channel);//add to mychannles
         channelSubs.insert({channel,nextSubsctiptionId});//add to channlesubs
         nextSubsctiptionId++;//raise sub id ++
         cout << "Joined channel " + channel;//syso "Joined channel <channelname>"
-
         return true;
     }
     return false;
@@ -137,7 +144,7 @@ bool StompProtocol::join(string channel){
     
     
 }
-bool StompProtocol::exit(string channel){
+StompFrame StompProtocol::exit(string channel){
     if(isLoggedIn==false){ //if not logged in ask the user to log in first
         cout << "please login first";
         return false;
@@ -146,40 +153,78 @@ bool StompProtocol::exit(string channel){
         cout << "you are not subscribed to the channel" + channel;
         return false;
     } 
-
-    //create unsubscribe frame
-    // send using  handler.sendFrameAscii()
-    //if sent correctly :
-
-    
-    //remove to mychannles
-    //remove to channlesubs
-    //syso "Exited channel <channelname>"
-
+    int subId = channelSubs.find(channel)->second;
+    map<string, string> hdrs;
+    hdrs.insert({"id",to_string(subId)});
+    StompFrame frame("UNSUBSCRIBE", hdrs, "\n");//create unsubscription frame//check if needed a recipt frame;    
+    bool ans= handler->sendFrameAscii(frame.serialize(),'\0'); // send using handler.sendFrameAscii
+    if(ans){
+        myChannels.erase(std::remove(myChannels.begin(), myChannels.end(), channel), myChannels.end());    //remove to mychannles
+        channelSubs.erase(channel);//remove to channlesubs
+        cout << "Exited channel <channelname>";
+        return true;
+    }
+    return false;
 }
-bool StompProtocol::report(string message){
+StompFrame StompProtocol::report(string json_path){
     if(isLoggedIn==false){ //if not logged in ask the user to log in first
         cout << "please login first";
         return false;
     }
+    bool ans=true;
+    names_and_events eventsTxt= parseEventsFile(json_path); //creating a name and events type
+    string channel = eventsTxt.channel_name;// retreving the channel name
+    if(!isSubscribed(channel)) {// checking if subscribed to channel
+        cout << "you are not subscribed to channel " + channel;
+        return false;
+    }
+    for(Event& event : eventsTxt.events) {
+        event.setEventOwnerUser(username);// editing the sender of the event
+        map<string, string> hdrs = {{"destination:", channel}};// editing the destination of the event
+        string generalInfo;
+        for(const auto& info : event.get_general_information()) {
+            generalInfo += "  " + info.first + ": " + info.second + "\n";// stringing the general info of the event into one string
+        }
+        string body = "user: " + username + "\n" +
+                        "city: " + event.get_city() + "\n" +
+                        "event name: " + event.get_name() + "\n" + 
+                        "date time: " + std::to_string(event.get_date_time()) + "\n" +
+                        "general information:\n" + generalInfo +
+                        "description:\n" + event.get_description();// building the body for the frame
+        StompFrame frame("SEND", hdrs, body);
+        if(!handler->sendFrameAscii(frame.serialize(), '\0')) {
+            ans = false;
+        }
+    }
+    if(ans==true){
+        cout << "reported";
+        return true;
+    }
+
+     
+
+
+
     //check correct input data
     //check if i am subscribed to channel if not syso "not subscribed to chanel"
     // create message frame
     // send using  handler.sendFrameAscii()
     // if sent correctly syso "Reported"
 }
-bool StompProtocol::logout(){
+StompFrame StompProtocol::logout(){
     if(isLoggedIn==false){ //if not logged in ask the user to log in first
         cout << "please login first";
         return false;
     }
-    //check correct input data
-    // check if isrunning == true
-    //change isrunnig to false
-    //send dissconnect frame
-    //call destructor
+    else{
+    StompFrame frame("DISCONNECT", {"recipt:",id}, "\n");//create unsubscription frame//check if needed a recipt frame;    
+    handler->sendFrameAscii(frame.serialize(),'\0');//send disconnect frame
+    isLoggedIn=false;//change isLoggedIn to false
+    handler->close();
+    handler->~ConnectionHandler();//call destructor
+    }    
 }
-bool StompProtocol::summary(string channel, string user ,string txtName){
+StompFrame StompProtocol::summary(string channel, string user ,string txtName){
     if(isLoggedIn==false){ //if not logged in ask the user to log in first
         cout << "please login first";
         return false;
@@ -188,7 +233,6 @@ bool StompProtocol::summary(string channel, string user ,string txtName){
     //check if subscribed to channel
     //create txt file
 }
-
 bool StompProtocol::isSubscribed(string channel){
     for(string c: myChannels){
         if(c== channel)
@@ -197,7 +241,65 @@ bool StompProtocol::isSubscribed(string channel){
     return false;
 }
 
+enum serverCommand {
+    CONNECTED,
+    MESSAGE,
+    RECIPT,
+    ERROR,
+};
+serverCommand serverStringToCommand(const std::string& command) {
+    if (command == "CONNECTED") return CONNECTED;
+    if (command == "MESSAGE") return MESSAGE;
+    if (command == "RECIPT") return RECIPT;
+    if (command == "ERROR") return ERROR;
+}
+void StompProtocol::proccesRecievedFrame(const string& args){
+        StompFrame frame = StompFrame::parse(args);
+        string frameType = frame.getCommand();
+        switch (serverStringToCommand(frameType)) {
+            case serverCommand::CONNECTED:
+                connected();
+                break;
+            case serverCommand::MESSAGE:
+                if(args.size()==2){
+                    message(args[1]);
+                }
+                else{
+                    cout << "join command needs 1 args: {channel_name}";
+                }
+                break;
+            case serverCommand::RECIPT:
+                if(args.size()==2){
+                    exit(args[1]);
+                }
+                else{
+                    cout << "exit command needs 1 args: {channel_name}";
+                }
+                break;
+            case serverCommand::ERROR:
+                if(args.size()==2){
+                    report(args[1]);
+                }
+                else{
+                    cout << "report command needs 1 args: {file}";
+                }
+                break;
+            default:
+                cout << "invalid command";
+                break;
+        }
+}
 
-// //bool StompProtocol::processFrame(StompFrame frame);
+bool StompProtocol::connected(){
+    isLoggedIn=true;
+    cout << "Login succesful";
+    return true; 
+}
+
+bool StompProtocol::message(){
+
+
+
+}
 
 

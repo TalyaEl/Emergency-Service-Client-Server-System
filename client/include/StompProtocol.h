@@ -11,7 +11,7 @@ class StompProtocol
 private:
 ConnectionHandler* handler;// conection handler
 const int connectionId;// conection id
-const string username; //current username
+string username; //current username
 bool isLoggedIn; // true if user is logged in
 int nextSubsctiptionId; // counter to generate next subscriprion id
 std::map<string,int > channelSubs; // hashmap for <channel, subscriptionId>
@@ -21,14 +21,17 @@ std::vector<Event> events; // data structure to store events
 
 // hashmap for reciptId 
 public:
-StompProtocol(int connectionId, string username);
-void frameNav(const std::vector<string>& args);
-bool login(string hostPort, string username, string password);
-bool join(string channel);
-bool exit(string channel);
-bool report(string message);
-bool logout();
-bool summary(string channel,string user, string txtName);
+StompProtocol(int connectionId);
+void proccesKeyboardInput(const std::vector<string>& args);
+StompFrame login(string hostPort, string username, string password);
+StompFrame join(string channel);
+StompFrame exit(string channel);
+StompFrame report(string json_path);
+StompFrame logout();
+StompFrame summary(string channel,string user, string txtName);
 bool isSubscribed(string channel);
-//bool processFrame(StompFrame frame);
+
+void StompProtocol::proccesRecievedFrame(const string& args);
+bool StompProtocol::connected();
+bool StompProtocol::message();
 };
