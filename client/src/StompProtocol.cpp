@@ -11,6 +11,7 @@ using namespace std;
 // bool isLoggedIn; // true if user is logged in
 // int nextSubsctiptionId; // counter to generate next subscriprion id
 //std::map<string,int > channelSubs; // hashmap for <channel, subscriptionId>
+// std::vector<string> myChannels;
 // std::vector<Event> events;
 enum Command {
     login,
@@ -39,15 +40,15 @@ void StompProtocol::frameNav(const std::vector<string>& args){
         string frameType= args[0];
         switch (stringToCommand(frameType)) {
             case Command::login:
-                if(args.size()<=5){
-                    login(args[1],args[2],args[3],args[4]);
+                if(args.size()==4){
+                    login(args[1],args[2],args[3]);
                 }
                 else{
                     cout << "login command needs 3 args: {host:port} {username} {password}";
                 }
                 break;
             case Command::join:
-                if(args.size()<=2){
+                if(args.size()==2){
                     join(args[1]);
                 }
                 else{
@@ -55,7 +56,7 @@ void StompProtocol::frameNav(const std::vector<string>& args){
                 }
                 break;
             case Command::exitChannel:
-                if(args.size()<=2){
+                if(args.size()==2){
                     exit(args[1]);
                 }
                 else{
@@ -63,7 +64,7 @@ void StompProtocol::frameNav(const std::vector<string>& args){
                 }
                 break;
             case Command::report:
-                if(args.size()<=2){
+                if(args.size()==2){
                     report(args[1]);
                 }
                 else{
@@ -74,7 +75,7 @@ void StompProtocol::frameNav(const std::vector<string>& args){
                 logout();
                 break;
             case Command::summary:
-                if(args.size()<=3){
+                if(args.size()==3){
                     summary(args[1], args[2], args[3]);
                 }
                 else{
@@ -88,8 +89,8 @@ void StompProtocol::frameNav(const std::vector<string>& args){
 }
 
 
-bool StompProtocol::login(string host, string port, string username, string password){
-    short myPort= std::stoi(port);
+bool StompProtocol::login(string hostPort, string username, string password){
+   // short myPort= std::stoi(port);
     bool ans;
     if(isLoggedIn==true){
         cout << "The client is already logged in, log out before trying again";
@@ -100,14 +101,19 @@ bool StompProtocol::login(string host, string port, string username, string pass
         this->handler= new ConnectionHandler(host, myPort);
         ans=handler->connect();
         if(ans==true){
+            //sent connect frame
             cout << "Login succesful";
             return true;
         }
         else return false;
     }
 }
-
 bool StompProtocol::join(string channel){
+    if(isLoggedIn==false){ //if not logged in ask the user to log in first
+        cout << "please login first";
+        return false;
+    }
+
     if(isSubscribed(channel)){     //check correct input data
         cout << "cannot subscribe to a channel you are already subscribed to";
         return false;
@@ -116,38 +122,46 @@ bool StompProtocol::join(string channel){
     string frame = "SUBSCRIBE\n" + string("destination:") + channel + "\n" + "id:"
      + to_string(nextSubsctiptionId) + "\n" +"\0"; //create subscription frame//check if needed a recipt frame;    
     bool ans= handler->sendFrameAscii(frame,'\0'); // send using handler.sendFrameAscii
-    if(ans){
-        myChannels.push_back(channel);
-        channelSubs.insert({channel,nextSubsctiptionId});
-        nextSubsctiptionId++;
-        cout << "Joined channel " + channel;
+    if(ans){//if was sent:
+        myChannels.push_back(channel);//add to mychannles
+        channelSubs.insert({channel,nextSubsctiptionId});//add to channlesubs
+        nextSubsctiptionId++;//raise sub id ++
+        cout << "Joined channel " + channel;//syso "Joined channel <channelname>"
+
         return true;
     }
     return false;
     //return if was sent
-    //if was sent:
-    //raise sub id ++
-    //add to mychannles
-    //add to channlesubs
-    //syso "Joined channel <channelname>"
+    
+    
+    
+    
 }
 bool StompProtocol::exit(string channel){
-    if(!isSubscribed(channel)){//check correct input data
-        cout << "you are not subscribed to the channel";
+    if(isLoggedIn==false){ //if not logged in ask the user to log in first
+        cout << "please login first";
         return false;
     }
-    int subId = channelSubs.find(channel);
-    string ans= "UNSUBSCRIBE \n" + 
+    if(!isSubscribed(channel)){//check correct input data
+        cout << "you are not subscribed to the channel" + channel;
+        return false;
+    } 
 
     //create unsubscribe frame
     // send using  handler.sendFrameAscii()
     //if sent correctly :
+
+    
     //remove to mychannles
     //remove to channlesubs
     //syso "Exited channel <channelname>"
 
 }
 bool StompProtocol::report(string message){
+    if(isLoggedIn==false){ //if not logged in ask the user to log in first
+        cout << "please login first";
+        return false;
+    }
     //check correct input data
     //check if i am subscribed to channel if not syso "not subscribed to chanel"
     // create message frame
@@ -155,6 +169,10 @@ bool StompProtocol::report(string message){
     // if sent correctly syso "Reported"
 }
 bool StompProtocol::logout(){
+    if(isLoggedIn==false){ //if not logged in ask the user to log in first
+        cout << "please login first";
+        return false;
+    }
     //check correct input data
     // check if isrunning == true
     //change isrunnig to false
@@ -162,13 +180,17 @@ bool StompProtocol::logout(){
     //call destructor
 }
 bool StompProtocol::summary(string channel, string user ,string txtName){
+    if(isLoggedIn==false){ //if not logged in ask the user to log in first
+        cout << "please login first";
+        return false;
+    }
     //check correct input data
     //check if subscribed to channel
     //create txt file
 }
 
 bool StompProtocol::isSubscribed(string channel){
-    for( string c: myChannels){
+    for(string c: myChannels){
         if(c== channel)
             return true;
     }

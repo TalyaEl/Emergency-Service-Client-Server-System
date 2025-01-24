@@ -23,7 +23,7 @@ std::vector<Event> events; // data structure to store events
 public:
 StompProtocol(int connectionId, string username);
 void frameNav(const std::vector<string>& args);
-bool login(string host, string port, string username, string password);
+bool login(string hostPort, string username, string password);
 bool join(string channel);
 bool exit(string channel);
 bool report(string message);
