@@ -9,7 +9,7 @@ class StompFrame {
 private:
    string command;
    map<string, string> headers;
-   std::string body;
+   string body;
 
 public:
     //constructors:
@@ -28,6 +28,4 @@ public:
     //maybe, specific header getters
     string getHeader(const string& key) const;
     bool hasHeader(const string& key) const;
-
-
 };
