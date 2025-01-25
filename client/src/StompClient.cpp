@@ -13,6 +13,7 @@ using std::exception;
 using std::cin;
 using std::endl;
 using std::vector;
+using std::string;
 
 StompClient::StompClient() : 
     connection(nullptr),
@@ -32,10 +33,24 @@ void StompClient::read_from_socket() {
             is_running = false;
             break;
         }
-        
+
+    	//converting the inFrame string to a vector for the process
+		vector<string> args;
+		istringstream iss(inFrameStr);
+        string word;
+        while (iss >> word) {
+            args.push_back(word);
+        }
+
         try {
-            StompFrame inFrame = StompFrame::parse(inFrameStr); //from string to frame
-            protocol->processReceivedFrame(inFrame); //process incoming frame from server
+            if (args[0] == "RECEIPT") {
+                connection -> close();
+                connection -> ~ConnectionHandler(); //FIGURE THIS OUT
+            }
+            else {
+                StompFrame inFrame = StompFrame::parse(inFrameStr); //from string to frame
+                protocol->processReceivedFrame(inFrame); //process incoming frame from server
+            }
         }
         catch (const exception& e) {
             std::cerr << "Error processing received frame: " << e.what() << endl;
