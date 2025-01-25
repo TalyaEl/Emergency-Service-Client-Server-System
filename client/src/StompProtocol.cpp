@@ -7,8 +7,8 @@
 #include <set>
 #include <fstream>
 #include <algorithm>
-#include "/workspaces/Assignment3/client/src/ConnectionHandler.cpp"
 using namespace std;
+using std::cout;
 // const int connectionId;// conection id
 // const string username; //current username
 // bool isLoggedIn; // true if user is logged in
@@ -76,7 +76,7 @@ StompFrame StompProtocol::processKeyboardInput(const std::vector<string>& args){
                 break;
             case keyCommand::summary:
                 if(args.size()==3){
-                    return summary(args[1], args[2], args[3]);
+                    summary(args[1], args[2], args[3]);
                 }
                 else{
                     cout << "summary command needs 3 args: {channel_name} {user} {file}";
@@ -110,7 +110,6 @@ StompFrame StompProtocol::login(string hostPort, string user, string password){
         return frame;
         }
     }
-}
 StompFrame StompProtocol::join(string channel){
     if(isLoggedIn==false){ //if not logged in ask the user to log in first
         cout << "please login first";
@@ -201,10 +200,6 @@ StompFrame StompProtocol::logout(){
     logoutId=nextReciptId;
     nextReciptId++;
     return frame;
-    //change to recipt frame sent in respons to the disconnect frame
-    isLoggedIn=false;//change isLoggedIn to false
-    handler->close();
-    handler->~ConnectionHandler();//call destructor
     }    
 }
 void StompProtocol::summary(string channel, string user ,string txtName){
@@ -223,12 +218,21 @@ void StompProtocol::summary(string channel, string user ,string txtName){
     int active = 0;
     int forces = 0;
     for (const Event& event : events) {
-        if (event.getEventOwnerUser() == user) {
+        if (event.getEventOwnerUser() == user && event.get_channel_name()== channel) {
             total++;
             if (event.get_general_information().at("active") == "true")
                 active++;
             if (event.get_general_information().at("forces_arrival_at_scene") == "true") 
                 forces++;
+        }
+    }
+    outFile << "Total: " << total << "\n"
+    << "Active: " << active << "\n"
+    << "Forced Arrival: " << forces << "\n";
+    total=0;
+    for (const Event& event : events) {
+        if (event.getEventOwnerUser() == user && event.get_channel_name()== channel) {
+            total++;
             outFile << "Report " << total << ":\n"
                  << "  city: " << event.get_city() << "\n"
                  << "  date time: " << to_string(event.get_date_time()) << "\n"
@@ -237,10 +241,6 @@ void StompProtocol::summary(string channel, string user ,string txtName){
 
         }
     }
-    outFile << "Total: " << total << "\n"
-         << "Active: " << active << "\n"
-         << "Forced Arrival: " << forces << "\n";
-    
     outFile.close();
     cout << "Summary written to: " << txtName << endl;
 
@@ -265,52 +265,73 @@ serverCommand serverStringToCommand(const std::string& command) {
     if (command == "RECIPT") return RECIPT;
     if (command == "ERROR") return ERROR;
 }
-void StompProtocol::processReceivedFrame(const StompFrame& args){
+void StompProtocol::processReceivedFrame(const StompFrame& frame){
         string frameType = frame.getCommand();
         switch (serverStringToCommand(frameType)) {
             case serverCommand::CONNECTED:
-                connected();
+                connectedFrame(frame);
                 break;
             case serverCommand::MESSAGE:
-                if(args.size()==2){
-                    message(args[1]);
-                }
-                else{
-                    cout << "join command needs 1 args: {channel_name}";
-                }
+                    messageFrame(frame);
                 break;
             case serverCommand::RECIPT:
-                if(args.size()==2){
-                    exit(args[1]);
-                }
-                else{
-                    cout << "exit command needs 1 args: {channel_name}";
-                }
+                    reciptFrame(frame);
                 break;
             case serverCommand::ERROR:
-                if(args.size()==2){
-                    report(args[1]);
-                }
-                else{
-                    cout << "report command needs 1 args: {file}";
-                }
-                break;
+                    errorFrame(frame);
             default:
                 cout << "invalid command";
                 break;
-        }
+        
+    }
 }
 
-bool StompProtocol::connected(){
+void StompProtocol::connectedFrame(const StompFrame& frame){
     isLoggedIn=true;
     cout << "Login succesful";
-    return true; 
 }
 
-bool StompProtocol::message(){
+void StompProtocol::messageFrame(const StompFrame& frame){
+    string channel = frame.getHeader("destination");
+    if(channel != ""){
+        string body = frame.getBody();
+        string eve= channel +"\n" + body;
+        Event event(eve);
+        events.push_back(event);
+    }
+}
 
+void StompProtocol::reciptFrame(const StompFrame& frame){
+    string recId= frame.getHeader("recipt-id");
+    if(recId != ""){
+        int Id = std::stoi(recId);
+        if(Id == logoutId){
+            isLoggedIn=false;
+            handler->close();
+            handler->~ConnectionHandler();
+        }
+    }
+}
 
+void StompProtocol::errorFrame(const StompFrame& frame){
+    string error = frame.getHeader("message");
+    if(error == ""){
+        string body= frame.getBody();
+        string print= error + "\n" + body;
+        cout << print;
+    }       
+    
 
 }
+
+
+
+
+
+
+
+
+
+
 
 
