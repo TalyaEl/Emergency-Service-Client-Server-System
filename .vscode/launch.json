@@ -9,7 +9,9 @@
             "name": "StompServer",
             "request": "launch",
             "mainClass": "bgu.spl.net.impl.stomp.StompServer",
-            "projectName": "server"
+            "projectName": "server",
+            "args": ["7777", "tpc"],
+            "cwd": "${workspaceFolder}/server"
         },
         {
             "type": "java",

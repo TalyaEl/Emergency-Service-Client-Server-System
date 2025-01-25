@@ -155,7 +155,7 @@ vector<StompFrame> StompProtocol::report(string json_path){
     vector<StompFrame> report= vector<StompFrame>();
     for(Event& event : eventsTxt.events) {
         event.setEventOwnerUser(username);// editing the sender of the event
-        map<string, string> hdrs = {{"destination:", channel}};// editing the destination of the event
+        map<string, string> hdrs = {{"destination", channel}};// editing the destination of the event
         string generalInfo;
         for(const auto& info : event.get_general_information()) {
             generalInfo += "  " + info.first + ": " + info.second + "\n";// stringing the general info of the event into one string

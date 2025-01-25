@@ -26,8 +26,9 @@ StompClient::~StompClient() {
 }
 
 void StompClient::read_from_socket() {
-    string inFrameStr;
+
     while (is_running) {
+        string inFrameStr;
         if (!connection -> getFrameAscii(inFrameStr, '\0')) { //trying reading from the socket
             cerr << "Error reading from socket" << endl;
             is_running = false;
