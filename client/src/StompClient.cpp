@@ -44,8 +44,7 @@ void StompClient::read_from_socket() {
 
         try {
             if (args[0] == "RECEIPT") {
-                connection -> close();
-                connection -> ~ConnectionHandler(); //FIGURE THIS OUT
+                connection -> ~ConnectionHandler(); 
             }
             else {
                 StompFrame inFrame = StompFrame::parse(inFrameStr); //from string to frame
