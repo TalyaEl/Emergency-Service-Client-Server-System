@@ -4,6 +4,7 @@ using std::istringstream;
 using std::stringstream;
 
 //constructor
+StompFrame::StompFrame() : command(""), headers(), body("") {}
 StompFrame::StompFrame(string cmd, map<string, string> hdrs, string frameBody) :
     command(cmd), headers(hdrs), body(frameBody) {}
 
