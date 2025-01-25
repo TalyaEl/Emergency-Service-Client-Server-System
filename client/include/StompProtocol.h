@@ -3,14 +3,15 @@
 #include <vector>
 #include <atomic>
 #include <map>
-#include "../include/ConnectionHandler.h"
-#include "../include/event.h"
 using namespace std;
-// TODO: implement the STOMP protocol
+class StompFrame;
+class Event;
+
+
+
 class StompProtocol
 {
 private:
-ConnectionHandler* handler;// conection handler
 std::atomic<int> connectionId; // conection id
 string username; //current username
 bool isLoggedIn; // true if user is logged in
@@ -25,7 +26,7 @@ std::vector<Event> events; // data structure to store events
 // hashmap for reciptId 
 public:
 StompProtocol();
-StompFrame processKeyboardInput(const std::vector<string>& args);
+StompFrame processKeyboardInput(const std::vector<std::string>& args);
 StompFrame login(string hostPort, string username, string password);
 StompFrame join(string channel);
 StompFrame exit(string channel);
@@ -41,4 +42,6 @@ void reciptFrame(const StompFrame& frame);
 void errorFrame(const StompFrame& frame);
 
 string epoch_to_date(int timestamp);
+StompProtocol(const StompProtocol&) = delete;
+StompProtocol& operator=(const StompProtocol&) = delete;
 };

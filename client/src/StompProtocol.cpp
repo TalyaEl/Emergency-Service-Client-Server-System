@@ -1,5 +1,5 @@
 #include "../include/StompProtocol.h"
-#include "../include/ConnectionHandler.h"
+#include "../include/event.h"
 #include "../include/StompFrame.h"
 #include <iostream>
 #include <string>
@@ -8,20 +8,14 @@
 #include <set>
 #include <fstream>
 #include <algorithm>
+#include <ctime>
 using namespace std;
 using std::cout;
-// const int connectionId;// conection id
-// const string username; //current username
-// bool isLoggedIn; // true if user is logged in
-// int nextSubsctiptionId; // counter to generate next subscriprion id
-//std::map<string,int > channelSubs; // hashmap for <channel, subscriptionId>
-// std::vector<string> myChannels;
-// std::vector<Event> events;
+
 enum keyCommand {
     login,
     join,
     exitChannel,
-//    report,
     logout,
     summary
 };
@@ -29,15 +23,14 @@ keyCommand keyStringToCommand(const std::string& command) {
     if (command == "login") return login;
     if (command == "join") return join;
     if (command == "exit") return exitChannel;
-//    if (command == "report") return report;
     if (command == "logout") return logout;
     if (command == "summary") return summary;
 }
 StompProtocol::StompProtocol(): 
-handler(),connectionId(connectionId++),username(),isLoggedIn(false),
+connectionId(connectionId++),username(),isLoggedIn(false),
 nextSubsctiptionId(1),nextReciptId(1),logoutId(-1),channelSubs(),myChannels(),events()
 {}
-StompFrame StompProtocol::processKeyboardInput(const std::vector<string>& args){
+StompFrame StompProtocol::processKeyboardInput(const std::vector<std::string>& args){
         string frameType= args[0];
         switch (keyStringToCommand(frameType)) {
             case keyCommand::login:
@@ -64,14 +57,7 @@ StompFrame StompProtocol::processKeyboardInput(const std::vector<string>& args){
                     cout << "exit command needs 1 args: {channel_name}";
                 }
                 break;
-            // case keyCommand::report:
-                // if(args.size()==2){
-                //     return report(args[1]);
-                // }
-                // else{
-                //     cout << "report command needs 1 args: {file}";
-                // }
-                // break;
+
             case keyCommand::logout:
                 return logout();
                 break;
@@ -311,8 +297,6 @@ void StompProtocol::reciptFrame(const StompFrame& frame){
         int Id = std::stoi(recId);
         if(Id == logoutId){
             isLoggedIn=false;
-            handler->close();
-            handler->~ConnectionHandler();
         }
     }
 }
@@ -328,7 +312,7 @@ void StompProtocol::errorFrame(const StompFrame& frame){
 
 }
 
-string epoch_to_date(int timestamp) {
+string StompProtocol::epoch_to_date(int timestamp) {
     std::time_t time = timestamp;
     std::tm* localTime = std::localtime(&time);
     char buffer[20];
