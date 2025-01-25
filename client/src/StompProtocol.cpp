@@ -3,6 +3,7 @@
 #include "../include/StompFrame.h"
 #include <iostream>
 #include <string>
+#include <atomic>
 #include <vector>
 #include <set>
 #include <fstream>
@@ -32,8 +33,8 @@ keyCommand keyStringToCommand(const std::string& command) {
     if (command == "logout") return logout;
     if (command == "summary") return summary;
 }
-StompProtocol::StompProtocol(int Id): 
-handler(),connectionId(Id),username(),isLoggedIn(false),
+StompProtocol::StompProtocol(): 
+handler(),connectionId(connectionId.fetch_add(1)),username(),isLoggedIn(false),
 nextSubsctiptionId(1),nextReciptId(1),logoutId(-1),channelSubs(),myChannels(),events()
 {}
 StompFrame StompProtocol::processKeyboardInput(const std::vector<string>& args){
@@ -235,7 +236,7 @@ void StompProtocol::summary(string channel, string user ,string txtName){
             total++;
             outFile << "Report " << total << ":\n"
                  << "  city: " << event.get_city() << "\n"
-                 << "  date time: " << to_string(event.get_date_time()) << "\n"
+                 << "  date time: " << epoch_to_date(event.get_date_time()) << "\n"
                  << "  event name: " << event.get_name() << "\n"
                  << "  summary: " << event.get_description().substr(0, 27) << "...\n";
 
@@ -323,6 +324,15 @@ void StompProtocol::errorFrame(const StompFrame& frame){
     
 
 }
+
+string epoch_to_date(int timestamp) {
+    std::time_t time = timestamp;
+    std::tm* localTime = std::localtime(&time);
+    char buffer[20];
+    std::strftime(buffer, sizeof(buffer), "%d/%m/%Y %H:%M", localTime);
+    return buffer;
+}
+
 
 
 
