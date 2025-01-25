@@ -48,7 +48,9 @@ void StompClient::read_from_socket() {
             }
             else {
                 StompFrame inFrame = StompFrame::parse(inFrameStr); //from string to frame
+                cout << inFrame.getCommand() << "\n";// testtttttttttttttt
                 protocol->processReceivedFrame(inFrame); //process incoming frame from server
+
             }
         }
         catch (const exception& e) {
@@ -88,6 +90,7 @@ void StompClient::process_keyboard_input() {
 			if (args[0] == "login") {
                 StompFrame frame = protocol -> processKeyboardInput(args); //getting the connected frame
                 if (frame.getCommand() != "") {
+                    cout << frame.getCommand() << "\n";
                     handleLogin(args);
                     connection->sendFrameAscii(frame.serialize(), '\0');
                 }            	
