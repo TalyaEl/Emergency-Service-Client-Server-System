@@ -28,9 +28,9 @@ StompClient::~StompClient() {
 }
 
 void StompClient::read_from_socket() {
-    string inFrameStr;
+
     while (is_running) {
-        
+        string inFrameStr;
         if (!connection -> getFrameAscii(inFrameStr, '\0')) { //trying reading from the socket
             cerr << "Error reading from socket" << endl;
             is_running = false;
@@ -113,8 +113,15 @@ void StompClient::process_keyboard_input() {
 			else if (args[0] == "summary") {
 				protocol -> processKeyboardInput(args);
 			}
+			//checks that it's not null pointer
+<<<<<<<<< Temporary merge branch 1
+			// else if (connection) { //other cases rather than login and report and summary
+            else {
+                StompFrame frame = protocol -> processKeyboardInput(args);
+=========
 			else{ //other cases rather than login and report and summary
 				StompFrame frame = protocol -> processKeyboardInput(args);
+>>>>>>>>> Temporary merge branch 2
                 if (frame.getCommand() != "") {
                     cout << frame.getCommand() << "\n"; //testinggggggg
 

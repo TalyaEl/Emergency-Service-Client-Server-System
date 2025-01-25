@@ -23,7 +23,7 @@ StompFrame StompFrame::parse(const string& stringFrame) {
     while (getline(stream, line) && !line.empty()) {
         size_t colonIndex = line.find(":");
         if (colonIndex != string::npos) { //if colon is found
-            string key = line.substr(0, colonIndex);
+            string key = line.substr(0, colonIndex - 1);
             string value = line.substr(colonIndex + 1);
             value.erase(0, value.find_first_not_of(" "));
             headers[key] = value;

@@ -102,27 +102,29 @@ public class StompProtocol implements StompMessagingProtocol<StompFrameAbstract>
             return;
         }
         ConcurrentHashMap<String, ConcurrentHashMap<Integer, Boolean>> channelSubscribers = connections.getChannelSub();
-        if (!channelSubscribers.containsKey(dest) || !channelSubscribers.get(dest).containsKey(connectionId)) {
-            connections.send(connectionId, new ErrorFrame("user not subscribed to the channel", connectionId, null, frame));
-            //DISCONNECT?
-            return;
-        }
+        // if (!channelSubscribers.containsKey(dest) || !channelSubscribers.get(dest).containsKey(connectionId)) {
+        //     connections.send(connectionId, new ErrorFrame("user not subscribed to the channel", connectionId, null, frame));
+        //     //DISCONNECT?
+        //     return;
+        // }
 
         ConcurrentHashMap<Integer, ConcurrentHashMap<String, Integer>> userSubscriptions = connections.getSub();
-        ConcurrentHashMap<Integer, Boolean> destSub = channelSubscribers.get(dest);
-        if (!destSub.isEmpty()) {
-            for (Integer id : destSub.keySet()) {
-                ConcurrentHashMap<String, Integer> userSub = userSubscriptions.get(id);
-               if (!userSub.isEmpty()) {
-                int subId = userSub.get(dest);
-                MessageFrame broadcast = new MessageFrame(subId, dest, frame.getBody()); //sending a message frame with each uniqe subId
-                    if (!connections.send(id, broadcast)) {
-                        connections.send(id, new ErrorFrame("couldn't send message - connection terminated", connectionId, null, frame));
-                        connections.disconnect(id);
-                    }
-               }
+        try {
+            ConcurrentHashMap<Integer, Boolean> destSub = channelSubscribers.get(dest);
+            if (!destSub.isEmpty()) {
+                for (Integer id : destSub.keySet()) {
+                    ConcurrentHashMap<String, Integer> userSub = userSubscriptions.get(id);
+                   if (!userSub.isEmpty()) {
+                    int subId = userSub.get(dest);
+                    MessageFrame broadcast = new MessageFrame(subId, dest, frame.getBody()); //sending a message frame with each uniqe subId
+                        if (!connections.send(id, broadcast)) {
+                            connections.send(id, new ErrorFrame("couldn't send message - connection terminated", connectionId, null, frame));
+                            connections.disconnect(id);
+                        }
+                   }
+                }
             }
-        } 
+        } catch (NullPointerException e) {}
 
     }
 
