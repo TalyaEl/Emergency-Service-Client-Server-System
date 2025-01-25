@@ -34,7 +34,7 @@ keyCommand keyStringToCommand(const std::string& command) {
     if (command == "summary") return summary;
 }
 StompProtocol::StompProtocol(): 
-handler(),connectionId(connectionId.fetch_add(1)),username(),isLoggedIn(false),
+handler(),connectionId(connectionId++),username(),isLoggedIn(false),
 nextSubsctiptionId(1),nextReciptId(1),logoutId(-1),channelSubs(),myChannels(),events()
 {}
 StompFrame StompProtocol::processKeyboardInput(const std::vector<string>& args){

@@ -5,7 +5,7 @@
 #include <iostream>
 #include <sstream>
 
-using std::make_unique;
+using std::unique_ptr;
 using std::thread;
 using std::cerr;
 using std::getline;
@@ -14,7 +14,11 @@ using std::cin;
 using std::endl;
 using std::vector;
 
-StompClient::StompClient() : protocol(make_unique<StompProtocol>()) {}
+StompClient::StompClient() : 
+    connection(nullptr),
+    protocol(std::unique_ptr<StompProtocol>(new StompProtocol())),
+    socket_thread(),
+    is_running(true) {}
 
 StompClient::~StompClient() {
 	stop();
@@ -45,7 +49,7 @@ void StompClient::handleLogin(const vector<string>& args) {
     string username = args[2];
     string password = args[3];
 
-    connection = make_unique<ConnectionHandler>(host, std::stoi(port));
+    connection = unique_ptr<ConnectionHandler>(new ConnectionHandler(host, std::stoi(port)));
     if (!connection->connect()) {
         throw std::runtime_error("Failed to connect to server");
     }

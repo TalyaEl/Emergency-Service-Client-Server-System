@@ -1,5 +1,5 @@
 #pragma once
-
+#include <vector>
 #include <string>
 #include <thread>
 #include <atomic>
@@ -7,6 +7,7 @@
 using std::unique_ptr;
 using std::thread;
 using std::atomic;
+using std::vector;
 
 class ConnectionHandler;
 class StompProtocol;
@@ -17,10 +18,10 @@ private:
     unique_ptr<ConnectionHandler> connection;
     unique_ptr<StompProtocol> protocol;
     thread socket_thread;
-    atomic<bool> is_running{true};
+    atomic<bool> is_running;
 
     void read_from_socket();
-    void handleLogin(const vector<string>& args);
+    void handleLogin(const std::vector<std::string>& args);
 public:
     StompClient();
     ~StompClient();
