@@ -19,6 +19,7 @@ private:
     unique_ptr<StompProtocol> protocol;
     thread socket_thread;
     atomic<bool> is_running;
+    bool open;
 
     void read_from_socket();
     void handleLogin(const std::vector<std::string>& args);

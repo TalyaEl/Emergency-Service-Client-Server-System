@@ -19,7 +19,9 @@ StompClient::StompClient() :
     connection(nullptr),
     protocol(std::unique_ptr<StompProtocol>(new StompProtocol())),
     socket_thread(),
-    is_running(true) {}
+    is_running(true),
+    open(false)
+    {}
 
 StompClient::~StompClient() {
 	stop();
@@ -91,7 +93,10 @@ void StompClient::process_keyboard_input() {
                 StompFrame frame = protocol -> processKeyboardInput(args); //getting the connected frame
                 if (frame.getCommand() != "") {
                     cout << frame.getCommand() << "\n"; //testinggggggg
-                    handleLogin(args);
+                    if(!open){
+                        handleLogin(args);
+                        open = true;
+                    }
                     connection->sendFrameAscii(frame.serialize(), '\0');
                 }            	
 			}
@@ -109,21 +114,19 @@ void StompClient::process_keyboard_input() {
 				protocol -> processKeyboardInput(args);
 			}
 			//checks that it's not null pointer
+<<<<<<<<< Temporary merge branch 1
 			// else if (connection) { //other cases rather than login and report and summary
             else {
                 StompFrame frame = protocol -> processKeyboardInput(args);
+=========
+			else{ //other cases rather than login and report and summary
+				StompFrame frame = protocol -> processKeyboardInput(args);
+>>>>>>>>> Temporary merge branch 2
                 if (frame.getCommand() != "") {
                     cout << frame.getCommand() << "\n"; //testinggggggg
 
                 	connection->sendFrameAscii(frame.serialize(), '\0');
                 }
-            // }
-				// StompFrame frame = protocol -> processKeyboardInput(args);
-                // if (frame.getCommand() != "") {
-                //     cout << frame.getCommand() << "\n"; //testinggggggg
-
-                // 	connection->sendFrameAscii(frame.serialize(), '\0');
-                // }
 			}
         }
         catch (const exception& e) {
