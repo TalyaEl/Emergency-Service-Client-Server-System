@@ -85,7 +85,6 @@ void StompClient::process_keyboard_input() {
         while (iss >> word) {
             args.push_back(word);
         }
-        
         try {
 			if (args[0] == "login") {
                 StompFrame frame = protocol -> processKeyboardInput(args); //getting the connected frame

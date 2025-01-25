@@ -41,6 +41,7 @@ StompFrame StompProtocol::processKeyboardInput(const std::vector<std::string>& a
                 }
                 else{
                     cout << "login command needs 3 args: {host:port} {username} {password}"<<"\n";
+                    return StompFrame();
                 }
                 break;
             case keyCommand::join:
@@ -49,6 +50,7 @@ StompFrame StompProtocol::processKeyboardInput(const std::vector<std::string>& a
                 }
                 else{
                     cout << "join command needs 1 args: {channel_name}"<<"\n";
+                    return StompFrame();
                 }
                 break;
             case keyCommand::exitChannel:
@@ -57,6 +59,7 @@ StompFrame StompProtocol::processKeyboardInput(const std::vector<std::string>& a
                 }
                 else{
                     cout << "exit command needs 1 args: {channel_name}"<<"\n";
+                    return StompFrame();
                 }
                 break;
 
@@ -69,6 +72,7 @@ StompFrame StompProtocol::processKeyboardInput(const std::vector<std::string>& a
                 }
                 else{
                     cout << "summary command needs 3 args: {channel_name} {user} {file}"<<"\n";
+                    return StompFrame();
                 }
                 break;
             default:
