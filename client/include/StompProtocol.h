@@ -33,7 +33,9 @@ StompFrame logout();
 void summary(string channel,string user, string txtName);
 bool isSubscribed(string channel);
 
-void StompProtocol::processReceivedFrame(const StompFrame& args);
-bool StompProtocol::connected();
-bool StompProtocol::message();
+void processReceivedFrame(const StompFrame& args);
+void connectedFrame(const StompFrame& frame);
+void messageFrame(const StompFrame& frame);
+void reciptFrame(const StompFrame& frame);
+void errorFrame(const StompFrame& frame);
 };
