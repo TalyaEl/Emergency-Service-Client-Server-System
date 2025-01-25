@@ -89,7 +89,7 @@ void StompClient::process_keyboard_input() {
 			if (args[0] == "login") {
                 StompFrame frame = protocol -> processKeyboardInput(args); //getting the connected frame
                 if (frame.getCommand() != "") {
-                    cout << frame.getCommand() << "\n";
+                    cout << frame.getCommand() << "\n"; //testinggggggg
                     handleLogin(args);
                     connection->sendFrameAscii(frame.serialize(), '\0');
                 }            	
@@ -98,6 +98,7 @@ void StompClient::process_keyboard_input() {
 				vector<StompFrame> eventsReported = protocol -> report(args[1]);
 				if (!eventsReported.empty()) {
 					for (StompFrame frame : eventsReported) {
+                        cout << frame.getCommand() << "\n"; //TESTTTTTT
 						connection->sendFrameAscii(frame.serialize(), '\0');
 					}
 				}
@@ -110,8 +111,17 @@ void StompClient::process_keyboard_input() {
 			else{ //other cases rather than login and report and summary
 				StompFrame frame = protocol -> processKeyboardInput(args);
                 if (frame.getCommand() != "") {
+                    cout << frame.getCommand() << "\n"; //testinggggggg
+
                 	connection->sendFrameAscii(frame.serialize(), '\0');
                 }
+            // }
+				// StompFrame frame = protocol -> processKeyboardInput(args);
+                // if (frame.getCommand() != "") {
+                //     cout << frame.getCommand() << "\n"; //testinggggggg
+
+                // 	connection->sendFrameAscii(frame.serialize(), '\0');
+                // }
 			}
         }
         catch (const exception& e) {

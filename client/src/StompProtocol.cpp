@@ -67,7 +67,7 @@ StompFrame StompProtocol::processKeyboardInput(const std::vector<std::string>& a
                 return logout();
                 break;
             case keyCommand::summary:
-                if(args.size()==3){
+                if(args.size()==4){
                     summary(args[1], args[2], args[3]);
                 }
                 else{
@@ -258,11 +258,9 @@ serverCommand serverStringToCommand(const std::string& command) {
     
 }
 void StompProtocol::processReceivedFrame(const StompFrame& frame){
-    cout << "processReceivedFrame test" << "\n";
         string frameType = frame.getCommand();
         switch (serverStringToCommand(frameType)) {
             case serverCommand::CONNECTED:
-                cout << "test9999999999999999999999" << "\n";
                 connectedFrame(frame);
                 break;
             case serverCommand::MESSAGE:
@@ -281,7 +279,6 @@ void StompProtocol::processReceivedFrame(const StompFrame& frame){
 }
 
 void StompProtocol::connectedFrame(const StompFrame& frame){
-    cout << "test101010101010101010101010101" << "\n";
     isLoggedIn=true;
     cout << "Login succesful" << "\n";
 }
