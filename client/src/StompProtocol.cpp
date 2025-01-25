@@ -155,7 +155,7 @@ vector<StompFrame> StompProtocol::report(string json_path){
     vector<StompFrame> report= vector<StompFrame>();
     for(Event& event : eventsTxt.events) {
         event.setEventOwnerUser(username);// editing the sender of the event
-        map<string, string> hdrs = {{"destination:", channel}};// editing the destination of the event
+        map<string, string> hdrs = {{"destination", channel}};// editing the destination of the event
         string generalInfo;
         for(const auto& info : event.get_general_information()) {
             generalInfo += "  " + info.first + ": " + info.second + "\n";// stringing the general info of the event into one string
@@ -183,7 +183,7 @@ StompFrame StompProtocol::logout(){
     string command = "DISCONNECT";
     string body= "";
     map<string, string> hdrs ;
-    hdrs.insert({"recipt:",to_string(nextReciptId)});
+    hdrs.insert({"receipt",to_string(nextReciptId)});
     StompFrame frame(command, hdrs ,body);//create unsubscription frame//check if needed a recipt frame;    
     logoutId=nextReciptId;
     nextReciptId++;
@@ -298,7 +298,7 @@ void StompProtocol::messageFrame(const StompFrame& frame){
 }
 
 void StompProtocol::reciptFrame(const StompFrame& frame){
-    string recId= frame.getHeader("recipt-id");
+    string recId= frame.getHeader("receipt-id");
     if(recId != ""){
         int Id = std::stoi(recId);
         if(Id == logoutId){
@@ -308,6 +308,7 @@ void StompProtocol::reciptFrame(const StompFrame& frame){
             nextReciptId=1;
             channelSubs.clear();
             events.clear();
+            cout << "logged out" << "\n";
         }
     }
 }
