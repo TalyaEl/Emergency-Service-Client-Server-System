@@ -24,8 +24,5 @@ public:
     string getCommand() const;
     map<string, string> getHeaders() const;
     string getBody() const;
-
-    //maybe, specific header getters
     string getHeader(const string& key) const;
-    bool hasHeader(const string& key) const;
 };
