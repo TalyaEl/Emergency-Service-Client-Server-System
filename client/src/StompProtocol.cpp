@@ -294,11 +294,14 @@ void StompProtocol::connectedFrame(const StompFrame& frame){
 
 void StompProtocol::messageFrame(const StompFrame& frame){
     string channel = frame.getHeader("destination");
-    if(channel != ""){
-        string body = frame.getBody();
-        string eve= channel +"\n" + body;
-        Event event(eve);
-        events.push_back(event);
+     if (!channel.empty()) {
+        events.emplace_back(channel, frame.getBody());
+        sort(events.begin(), events.end(), [](const Event& e1, const Event& e2) {
+            if (e1.get_date_time() == e2.get_date_time()) {
+                return e1.get_name() < e2.get_name();
+            }
+            return e1.get_date_time() < e2.get_date_time();
+        });
     }
 }
 
