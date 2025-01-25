@@ -25,6 +25,7 @@ keyCommand keyStringToCommand(const std::string& command) {
     if (command == "exit") return exitChannel;
     if (command == "logout") return logout;
     if (command == "summary") return summary;
+    return;
 }
 StompProtocol::StompProtocol(): 
 connectionId(connectionId++),username(),isLoggedIn(false),
@@ -71,7 +72,7 @@ StompFrame StompProtocol::processKeyboardInput(const std::vector<std::string>& a
                 break;
             default:
                 cout << "invalid command";
-                break;
+                return StompFrame();
         }
 }
 StompFrame StompProtocol::login(string hostPort, string user, string password){
