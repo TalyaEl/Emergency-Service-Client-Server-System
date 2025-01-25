@@ -40,7 +40,7 @@ StompFrame StompFrame::parse(const string& stringFrame) {
 
 string StompFrame::serialize() const {
     stringstream ss;
-    ss << command << '/n';
+    ss << command << '\n';
 
     for (const auto& header : headers) {
         ss << header.first << ":" << header.second << "\n";
@@ -57,3 +57,9 @@ string StompFrame::serialize() const {
 string StompFrame::getCommand() const {return command;}
 map<string, string> StompFrame::getHeaders() const {return headers;}
 string StompFrame::getBody() const {return body;}
+
+string StompFrame::getHeader(const string& key) const {
+    auto it = headers.find(key); //iterator to the key in map
+     //if the iterator isn't at the end of the map, return the value of key. otherwise, return empty string
+    return (it != headers.end()) ? it->second : "";
+}

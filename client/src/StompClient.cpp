@@ -68,9 +68,11 @@ void StompClient::process_keyboard_input() {
         
         try {
 			if (args[0] == "login") {
-				handleLogin(args);
-				StompFrame frame = protocol -> processKeyboardInput(args); //getting the connected frame
-            	connection->sendFrameAscii(frame.serialize(), '\0');
+                StompFrame frame = protocol -> processKeyboardInput(args); //getting the connected frame
+                if (frame.getCommand() != "") {
+                    handleLogin(args);
+                    connection->sendFrameAscii(frame.serialize(), '\0');
+                }            	
 			}
 			else if (args[0] == "report") { //to send a series of send frames - one for each event reported
 				vector<StompFrame> eventsReported = protocol -> report(args[1]);
@@ -87,7 +89,9 @@ void StompClient::process_keyboard_input() {
 			//checks that it's not null pointer
 			else if (connection) { //other cases rather than login and report and summary
 				StompFrame frame = protocol -> processKeyboardInput(args);
-            	connection->sendFrameAscii(frame.serialize(), '\0');
+                if (frame.getCommand() != "") {
+                	connection->sendFrameAscii(frame.serialize(), '\0');
+                }
 			}
         }
         catch (const exception& e) {
