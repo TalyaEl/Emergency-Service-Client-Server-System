@@ -17,7 +17,8 @@ enum keyCommand {
     join,
     exitChannel,
     logout,
-    summary
+    summary,
+    failed,
 };
 keyCommand keyStringToCommand(const std::string& command) {
     if (command == "login") return login;
@@ -25,7 +26,7 @@ keyCommand keyStringToCommand(const std::string& command) {
     if (command == "exit") return exitChannel;
     if (command == "logout") return logout;
     if (command == "summary") return summary;
-    return;
+    return failed;
 }
 StompProtocol::StompProtocol(): 
 connectionId(connectionId++),username(),isLoggedIn(false),
@@ -74,6 +75,8 @@ StompFrame StompProtocol::processKeyboardInput(const std::vector<std::string>& a
                 cout << "invalid command";
                 return StompFrame();
         }
+        return StompFrame();
+
 }
 StompFrame StompProtocol::login(string hostPort, string user, string password){
     size_t i= hostPort.find(":");
@@ -239,12 +242,16 @@ enum serverCommand {
     MESSAGE,
     RECIPT,
     ERROR,
+    DEFAULT,
 };
 serverCommand serverStringToCommand(const std::string& command) {
     if (command == "CONNECTED") return CONNECTED;
     if (command == "MESSAGE") return MESSAGE;
     if (command == "RECIPT") return RECIPT;
     if (command == "ERROR") return ERROR;
+    return DEFAULT;
+
+    
 }
 void StompProtocol::processReceivedFrame(const StompFrame& frame){
         string frameType = frame.getCommand();
