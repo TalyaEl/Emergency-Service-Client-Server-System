@@ -77,9 +77,6 @@ StompFrame StompProtocol::processKeyboardInput(const std::vector<std::string>& a
 StompFrame StompProtocol::login(string hostPort, string user, string password){
     size_t i= hostPort.find(":");
     string host= hostPort.substr(0,i);
-    string port= hostPort.substr(i+1);
-    short portNum= std::stoi(port);
-    bool ans;
     if(isLoggedIn==true){
         cout << "The client is already logged in, log out before trying again";
         return StompFrame();
@@ -167,11 +164,7 @@ vector<StompFrame> StompProtocol::report(string json_path){
     }
         cout << "reported";
         return report;
-    //check correct input data
-    //check if i am subscribed to channel if not syso "not subscribed to chanel"
-    // create message frame
-    // send using  handler.sendFrameAscii()
-    // if sent correctly syso "Reported"
+
 }
 StompFrame StompProtocol::logout(){
     if(isLoggedIn==false){ //if not logged in ask the user to log in first
@@ -281,7 +274,8 @@ void StompProtocol::connectedFrame(const StompFrame& frame){
 void StompProtocol::messageFrame(const StompFrame& frame){
     string channel = frame.getHeader("destination");
      if (!channel.empty()) {
-        events.emplace_back(channel, frame.getBody());
+        string report=  channel + "\n" + frame.getBody();
+        events.emplace_back(report);
         sort(events.begin(), events.end(), [](const Event& e1, const Event& e2) {
             if (e1.get_date_time() == e2.get_date_time()) {
                 return e1.get_name() < e2.get_name();

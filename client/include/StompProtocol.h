@@ -1,11 +1,12 @@
 #pragma once
 #include <string>
+#include "../include/event.h"
 #include <vector>
 #include <atomic>
 #include <map>
 using namespace std;
 class StompFrame;
-class Event;
+
 
 
 
