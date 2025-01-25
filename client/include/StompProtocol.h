@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <atomic>
 #include <map>
 #include "../include/ConnectionHandler.h"
 #include "../include/event.h"
@@ -10,7 +11,7 @@ class StompProtocol
 {
 private:
 ConnectionHandler* handler;// conection handler
-const int connectionId;// conection id
+std::atomic<int> connectionId; // conection id
 string username; //current username
 bool isLoggedIn; // true if user is logged in
 int nextSubsctiptionId; // counter to generate next subscriprion id
@@ -23,7 +24,7 @@ std::vector<Event> events; // data structure to store events
 
 // hashmap for reciptId 
 public:
-StompProtocol(int connectionId);
+StompProtocol();
 StompFrame processKeyboardInput(const std::vector<string>& args);
 StompFrame login(string hostPort, string username, string password);
 StompFrame join(string channel);
@@ -38,4 +39,6 @@ void connectedFrame(const StompFrame& frame);
 void messageFrame(const StompFrame& frame);
 void reciptFrame(const StompFrame& frame);
 void errorFrame(const StompFrame& frame);
+
+string epoch_to_date(int timestamp);
 };
