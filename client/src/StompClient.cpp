@@ -85,7 +85,6 @@ void StompClient::process_keyboard_input() {
         while (iss >> word) {
             args.push_back(word);
         }
-        
         try {
 			if (args[0] == "login") {
                 StompFrame frame = protocol -> processKeyboardInput(args); //getting the connected frame
@@ -108,7 +107,7 @@ void StompClient::process_keyboard_input() {
 				protocol -> processKeyboardInput(args);
 			}
 			//checks that it's not null pointer
-			else if (connection) { //other cases rather than login and report and summary
+			else{ //other cases rather than login and report and summary
 				StompFrame frame = protocol -> processKeyboardInput(args);
                 if (frame.getCommand() != "") {
                 	connection->sendFrameAscii(frame.serialize(), '\0');
