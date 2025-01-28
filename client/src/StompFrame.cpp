@@ -1,7 +1,11 @@
 #include "../include/StompFrame.h"
 #include <sstream>
+#include <string>
+#include <iostream>
 using std::istringstream;
 using std::stringstream;
+using namespace std;
+using std::cout;
 
 //constructor
 StompFrame::StompFrame() : command(""), headers(), body("") {}
@@ -16,14 +20,14 @@ StompFrame StompFrame::parse(const string& stringFrame) {
     map<string, string> headers;
     string body;
 
+
     //get the command line into command
     getline(stream, command);
-
     //get the headers from the string into the map
     while (getline(stream, line) && !line.empty()) {
         size_t colonIndex = line.find(":");
         if (colonIndex != string::npos) { //if colon is found
-            string key = line.substr(0, colonIndex - 1);
+            string key = line.substr(0, colonIndex);
             string value = line.substr(colonIndex + 1);
             value.erase(0, value.find_first_not_of(" "));
             headers[key] = value;
@@ -33,9 +37,9 @@ StompFrame StompFrame::parse(const string& stringFrame) {
     string bodyLine;
     while (getline(stream, bodyLine)) { //trim new line from body
         if (bodyLine[0] == '\0') break;
-        body += bodyLine;
+        body += bodyLine + "\n";
     }
-
+    
     return StompFrame(command, headers, body);
 }
 
@@ -51,7 +55,8 @@ string StompFrame::serialize() const {
     ss << body;
     ss << "\0";
 
-    return ss.str();
+    string result = ss.str();
+    return result;
 }
 
 //getters

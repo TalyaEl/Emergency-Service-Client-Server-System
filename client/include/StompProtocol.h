@@ -42,6 +42,7 @@ void messageFrame(const StompFrame& frame);
 void reciptFrame(const StompFrame& frame);
 void errorFrame(const StompFrame& frame);
 
+bool loggedIn() const;
 string epoch_to_date(int timestamp);
 StompProtocol(const StompProtocol&) = delete;
 StompProtocol& operator=(const StompProtocol&) = delete;
