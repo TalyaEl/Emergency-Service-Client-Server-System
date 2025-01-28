@@ -29,7 +29,7 @@ StompClient::~StompClient() {
 
 void StompClient::read_from_socket() {
 
-    while (is_running) {
+    while (open) {
         string inFrameStr;
         if (!connection -> getFrameAscii(inFrameStr, '\0')) { //trying reading from the socket
             cerr << "Error reading from socket" << endl;
@@ -50,7 +50,6 @@ void StompClient::read_from_socket() {
                 StompFrame inFrame = StompFrame::parse(inFrameStr); //from string to frame
                 protocol -> processReceivedFrame(inFrame);
                     if (!protocol->loggedIn()) {
-                        is_running = false;
                         connection->close();
                         open = false;
                     }
@@ -72,18 +71,19 @@ void StompClient::handleLogin(const vector<string>& args) {
     string port = args[1].substr(args[1].find(":") + 1);
     string username = args[2];
     string password = args[3];
-
-    if (socket_thread.joinable()) {
-       socket_thread.join();
-   }
-    connection = unique_ptr<ConnectionHandler>(new ConnectionHandler(host, std::stoi(port)));
-    if (!connection->connect()) {
-        throw std::runtime_error("Failed to connect to server");
+    if(!open){
+        if (socket_thread.joinable()) {
+        socket_thread.join();
+        }
+        connection = unique_ptr<ConnectionHandler>(new ConnectionHandler(host, std::stoi(port)));
+        if (!connection->connect()) {
+            throw std::runtime_error("Failed to connect to server");
+        }
+        is_running = true;
+        socket_thread = thread(&StompClient::read_from_socket, this); //so the socket thread will be initialize only once
+        open = true;
     }
-    is_running = true;
-    socket_thread = thread(&StompClient::read_from_socket, this); //so the socket thread will be initialize only once
 }
-
 void StompClient::process_keyboard_input() {
     string input;
     while (is_running) {
