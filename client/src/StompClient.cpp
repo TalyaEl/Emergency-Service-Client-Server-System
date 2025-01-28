@@ -33,8 +33,8 @@ void StompClient::read_from_socket() {
         string inFrameStr;
         if (!connection -> getFrameAscii(inFrameStr, '\0')) { //trying reading from the socket
             cerr << "Error reading from socket" << endl;
-            is_running = false;
-            break;
+            open = false;
+            continue;
         }
 
     	//converting the inFrame string to a vector for the process
@@ -47,11 +47,16 @@ void StompClient::read_from_socket() {
 
         try {
             if (args[0] == "RECEIPT") {
-                connection -> ~ConnectionHandler(); 
+                StompFrame inFrame = StompFrame::parse(inFrameStr); //from string to frame
+                protocol -> processReceivedFrame(inFrame);
+                    if (!protocol->loggedIn()) {
+                        is_running = false;
+                        connection->close();
+                        open = false;
+                    }
             }
             else {
                 StompFrame inFrame = StompFrame::parse(inFrameStr); //from string to frame
-                cout << inFrame.getCommand() << "\n";// testtttttttttttttt
                 protocol->processReceivedFrame(inFrame); //process incoming frame from server
 
             }
@@ -68,11 +73,14 @@ void StompClient::handleLogin(const vector<string>& args) {
     string username = args[2];
     string password = args[3];
 
+    if (socket_thread.joinable()) {
+       socket_thread.join();
+   }
     connection = unique_ptr<ConnectionHandler>(new ConnectionHandler(host, std::stoi(port)));
     if (!connection->connect()) {
         throw std::runtime_error("Failed to connect to server");
     }
-
+    is_running = true;
     socket_thread = thread(&StompClient::read_from_socket, this); //so the socket thread will be initialize only once
 }
 
@@ -88,23 +96,24 @@ void StompClient::process_keyboard_input() {
         while (iss >> word) {
             args.push_back(word);
         }
+
         try {
 			if (args[0] == "login") {
                 StompFrame frame = protocol -> processKeyboardInput(args); //getting the connected frame
                 if (frame.getCommand() != "") {
-                    cout << frame.getCommand() << "\n"; //testinggggggg
                     if(!open){
                         handleLogin(args);
                         open = true;
                     }
                     connection->sendFrameAscii(frame.serialize(), '\0');
-                }            	
+                } else{
+                    continue;
+                }	
 			}
 			else if (args[0] == "report") { //to send a series of send frames - one for each event reported
 				vector<StompFrame> eventsReported = protocol -> report(args[1]);
 				if (!eventsReported.empty()) {
 					for (StompFrame frame : eventsReported) {
-                        cout << frame.getCommand() << "\n"; //TESTTTTTT
 						connection->sendFrameAscii(frame.serialize(), '\0');
 					}
 				}
@@ -113,18 +122,10 @@ void StompClient::process_keyboard_input() {
 			else if (args[0] == "summary") {
 				protocol -> processKeyboardInput(args);
 			}
-			//checks that it's not null pointer
-<<<<<<<<< Temporary merge branch 1
-			// else if (connection) { //other cases rather than login and report and summary
-            else {
-                StompFrame frame = protocol -> processKeyboardInput(args);
-=========
 			else{ //other cases rather than login and report and summary
 				StompFrame frame = protocol -> processKeyboardInput(args);
->>>>>>>>> Temporary merge branch 2
-                if (frame.getCommand() != "") {
-                    cout << frame.getCommand() << "\n"; //testinggggggg
 
+                if (frame.getCommand() != "") {
                 	connection->sendFrameAscii(frame.serialize(), '\0');
                 }
 			}

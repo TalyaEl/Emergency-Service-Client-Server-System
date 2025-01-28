@@ -77,7 +77,7 @@ public class StompEncoderDecoder implements MessageEncoderDecoder<StompFrameAbst
         }
 
         for (int i = bodyStartIndex; i < lines.length; i++) { //creating the body
-            bodybuild.append(lines[i].trim()).append("\n");
+            bodybuild.append(lines[i]).append("\n");
         }
         return bodybuild.toString();
     }

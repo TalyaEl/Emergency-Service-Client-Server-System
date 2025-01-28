@@ -108,8 +108,12 @@ public class ConnectionsImpl<T> implements Connections<T> {
 
     public synchronized String connectedUser(String login) { //helper
         for (Integer i: activeUsers.keySet()) {
-            if (activeUsers.get(i).getKey().equals(login)) {
-                return login;
+            if (activeUsers.get(i).getKey() != null) {
+                if (activeUsers.get(i).getKey().equals(login)) {
+                    return login;
+
+                }
+            
             }
         }
         return null;
@@ -119,6 +123,7 @@ public class ConnectionsImpl<T> implements Connections<T> {
         SimpleEntry<String, ConnectionHandler<T>> entry = this.activeUsers.get(connectionId);
         if (entry != null) {
             SimpleEntry<String, ConnectionHandler<T>> updatedEntry = new SimpleEntry<>(user, entry.getValue());
+            activeUsers.remove(connectionId);
             activeUsers.put(connectionId, updatedEntry);
         }
     }

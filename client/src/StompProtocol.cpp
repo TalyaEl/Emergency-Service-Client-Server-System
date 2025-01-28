@@ -157,16 +157,17 @@ vector<StompFrame> StompProtocol::report(string json_path){
         event.setEventOwnerUser(username);// editing the sender of the event
         map<string, string> hdrs = {{"destination", channel}};// editing the destination of the event
         string generalInfo;
-        for(const auto& info : event.get_general_information()) {
-            generalInfo += "  " + info.first + ": " + info.second + "\n";// stringing the general info of the event into one string
+        const auto& generalInfoMap = event.get_general_information();
+        for(auto it = generalInfoMap.begin(); it != generalInfoMap.end(); ++it) {
+            generalInfo += "  " + it->first + ":" + it->second + "\n";
         }
-        string body = "user: " + username + "\n" +
+        string body = "user:" + username + "\n" +
                         "city: " + event.get_city() + "\n" +
                         "event name: " + event.get_name() + "\n" + 
                         "date time: " + std::to_string(event.get_date_time()) + "\n" +
-                        "general information:\n" + generalInfo +
-                        "description:\n" + event.get_description();// building the body for the frame
-        string command= "SEND";
+                        "general information:" + "\n" + generalInfo +
+                        "description:" + "\n" + event.get_description();
+        string command = "SEND";
         StompFrame frame(command, hdrs, body);
         report.push_back(frame);
     }
@@ -191,27 +192,36 @@ StompFrame StompProtocol::logout(){
     }    
 }
 void StompProtocol::summary(string channel, string user ,string txtName){
-    if(isLoggedIn==false){ //if not logged in ask the user to log in first
-        cout << "please login first"<<"\n";
+    if(isLoggedIn == false) { //if not logged in ask the user to log in first
+        cout << "please login first" << "\n";
         return;
     }
     if (!isSubscribed(channel)) {
         cout << "You are not subscribed to channel " + channel << "\n";
         return;
     }
+
     std::ofstream outFile(txtName);
     outFile << "Channel " << channel <<"\n";
-    outFile << "Stats:" <<"\n";
+    outFile << "Stats:" << "\n";
     int total = 0;
     int active = 0;
     int forces = 0;
-    for (const Event& event : events) {
+
+    for (const Event& event : events) { 
         if (event.getEventOwnerUser() == user && event.get_channel_name()== channel) {
             total++;
-            if (event.get_general_information().at("active") == "true")
-                active++;
-            if (event.get_general_information().at("forces_arrival_at_scene") == "true") 
-                forces++;
+            const auto& info = event.get_general_information();
+
+            if (info.find(" active") != info.end()) {  // Use find instead of at
+                if (info.find(" active")->second == "true")
+                    active++;
+            }
+            if (info.find(" forces_arrival_at_scene") != info.end()) {
+                if (info.find(" forces_arrival_at_scene")->second == "true")
+                    forces++;
+            }
+
         }
     }
     outFile << "Total: " << total << "\n"
@@ -221,12 +231,17 @@ void StompProtocol::summary(string channel, string user ,string txtName){
     for (const Event& event : events) {
         if (event.getEventOwnerUser() == user && event.get_channel_name()== channel) {
             total++;
-            outFile << "Report " << total << ":\n"
+            outFile << "Report_" << total << ":" << "\n"
                  << "  city: " << event.get_city() << "\n"
                  << "  date time: " << epoch_to_date(event.get_date_time()) << "\n"
-                 << "  event name: " << event.get_name() << "\n"
-                 << "  summary: " << event.get_description().substr(0, 27) << "...\n";
-
+                 << "  event name: " << event.get_name() << "\n";
+                 string s = event.get_description();
+                 if (s.size() <= 27 ){
+                    outFile << "  summary: " << event.get_description();
+                 }
+                 else{
+                    outFile << "  summary: " << event.get_description().substr(0, 26) << "..." << "\n";
+                 }
         }
     }
     outFile.close();
@@ -244,14 +259,14 @@ bool StompProtocol::isSubscribed(string channel){
 enum serverCommand {
     CONNECTED,
     MESSAGE,
-    RECIPT,
+    RECEIPT,
     ERROR,
     DEFAULT,
 };
 serverCommand serverStringToCommand(const std::string& command) {
     if (command == "CONNECTED") return CONNECTED;
     if (command == "MESSAGE") return MESSAGE;
-    if (command == "RECIPT") return RECIPT;
+    if (command == "RECEIPT") return RECEIPT;
     if (command == "ERROR") return ERROR;
     return DEFAULT;
 
@@ -266,7 +281,7 @@ void StompProtocol::processReceivedFrame(const StompFrame& frame){
             case serverCommand::MESSAGE:
                     messageFrame(frame);
                 break;
-            case serverCommand::RECIPT:
+            case serverCommand::RECEIPT:
                     reciptFrame(frame);
                 break;
             case serverCommand::ERROR:
@@ -286,8 +301,10 @@ void StompProtocol::connectedFrame(const StompFrame& frame){
 void StompProtocol::messageFrame(const StompFrame& frame){
     string channel = frame.getHeader("destination");
      if (!channel.empty()) {
-        string report=  channel + "\n" + frame.getBody();
-        events.emplace_back(report);
+        string report = "channel name:" + channel + "\n";
+        report = report + frame.getBody();
+        Event event(report);
+        events.emplace_back(event);
         sort(events.begin(), events.end(), [](const Event& e1, const Event& e2) {
             if (e1.get_date_time() == e2.get_date_time()) {
                 return e1.get_name() < e2.get_name();
@@ -323,7 +340,9 @@ void StompProtocol::errorFrame(const StompFrame& frame){
     
 
 }
-
+bool StompProtocol::loggedIn() const {
+    return isLoggedIn;
+}
 string StompProtocol::epoch_to_date(int timestamp) {
     std::time_t time = timestamp;
     std::tm* localTime = std::localtime(&time);
