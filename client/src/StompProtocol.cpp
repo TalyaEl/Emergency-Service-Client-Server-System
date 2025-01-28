@@ -286,8 +286,8 @@ void StompProtocol::processReceivedFrame(const StompFrame& frame){
                 break;
             case serverCommand::ERROR:
                     errorFrame(frame);
+                    break;
             default:
-                cout << "invalid command"<<"\n";
                 break;
         
     }
@@ -332,7 +332,7 @@ void StompProtocol::reciptFrame(const StompFrame& frame){
 
 void StompProtocol::errorFrame(const StompFrame& frame){
     string error = frame.getHeader("message");
-    if(error == ""){
+    if(error != ""){
         string body= frame.getBody();
         string print= error + "\n" + body;
         cout << print;
