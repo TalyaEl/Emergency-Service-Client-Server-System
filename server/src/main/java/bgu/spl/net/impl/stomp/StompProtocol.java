@@ -91,9 +91,6 @@ public class StompProtocol implements StompMessagingProtocol<StompFrameAbstract>
     private void send(SendFrame frame) {
 
         String dest = frame.getHeaders().get("destination");
-        // if (dest != null && dest.startsWith("/")) {
-        //     dest = dest.substring(1);
-        // }
 
         if (dest == null) {
             ErrorFrame error = new ErrorFrame("Missing destination", connectionId, null, frame);
@@ -102,11 +99,6 @@ public class StompProtocol implements StompMessagingProtocol<StompFrameAbstract>
             return;
         }
         ConcurrentHashMap<String, ConcurrentHashMap<Integer, Boolean>> channelSubscribers = connections.getChannelSub();
-        // if (!channelSubscribers.containsKey(dest) || !channelSubscribers.get(dest).containsKey(connectionId)) {
-        //     connections.send(connectionId, new ErrorFrame("user not subscribed to the channel", connectionId, null, frame));
-        //     //DISCONNECT?
-        //     return;
-        // }
 
         ConcurrentHashMap<Integer, ConcurrentHashMap<String, Integer>> userSubscriptions = connections.getSub();
         try {
@@ -131,10 +123,6 @@ public class StompProtocol implements StompMessagingProtocol<StompFrameAbstract>
     private void subscribe(SubscribeFrame frame) { 
         String dest = frame.getHeaders().get("destination");
         String subIdStr = frame.getHeaders().get("id");
-        
-        // if (dest != null && dest.startsWith("/")) {
-        //     dest = dest.substring(1);
-        // }
 
         if (dest == null || subIdStr == null) {
             connections.send(connectionId, new ErrorFrame("Missing destination or id", connectionId, null, frame));
